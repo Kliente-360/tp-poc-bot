@@ -79,15 +79,13 @@ export function PainelDeChat() {
         aria-expanded={aberto}
         aria-label={aberto ? 'Fechar conversa com a Léts' : 'Abrir conversa com a Léts'}
       >
-        {aberto ? <IconeFechar /> : <IconeBalao />}
+        {aberto ? <IconeFechar /> : <img src="/lets.jpg" alt="" className={estilos.fotoBotao} />}
       </button>
 
       {aberto && (
         <section className={estilos.painel} aria-label="Conversa com a Léts">
           <header className={estilos.topo}>
-            <span className={estilos.avatar} aria-hidden="true">
-              L
-            </span>
+            <img src="/lets.jpg" alt="" className={estilos.avatar} />
             <div>
               <p className={estilos.nome}>Léts</p>
               <p className={estilos.status}>Assistente da TotalPass</p>
@@ -175,20 +173,6 @@ export function PainelDeChat() {
         </section>
       )}
     </>
-  );
-}
-
-function IconeBalao() {
-  return (
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">
-      <path
-        d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.3-.6L3 21l1.8-4.9A8.2 8.2 0 0 1 3.6 11.5a8.4 8.4 0 0 1 9-8.4 8.4 8.4 0 0 1 8.4 8.4Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }
 
