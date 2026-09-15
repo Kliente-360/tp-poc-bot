@@ -14,7 +14,8 @@ export type EventoDeStream =
  * testes rode sem abrir chamado de verdade na org do cliente.
  */
 export interface AbridorDeCaso {
-  abrir(entrada: EntradaAbrirCaso & { conversationId: string }): Promise<{ numero: string }>;
+  /** `ip` existe para o limite por origem; o motor nao sabe o que e feito dele. */
+  abrir(entrada: EntradaAbrirCaso & { conversationId: string; ip?: string }): Promise<{ numero: string }>;
 }
 
 export interface Turno {
@@ -173,6 +174,7 @@ export class MotorDeConversa {
     conversationId: string,
     historico: Anthropic.MessageParam[],
     pergunta: string,
+    ip?: string,
   ): AsyncGenerator<EventoDeStream> {
     const { tenantId, store } = this.config;
     const conversa =
@@ -235,7 +237,7 @@ export class MotorDeConversa {
 
       const resultados: Anthropic.ToolResultBlockParam[] = [];
       for (const chamada of chamadas) {
-        resultados.push(await this.executar(chamada, conversa, turno));
+        resultados.push(await this.executar(chamada, conversa, turno, ip));
       }
       mensagens.push({ role: 'user', content: resultados });
     }
@@ -262,13 +264,14 @@ export class MotorDeConversa {
     chamada: Anthropic.ToolUseBlock,
     conversa: Conversa,
     turno: Turno,
+    ip?: string,
   ): Promise<Anthropic.ToolResultBlockParam> {
     const { tenantId, store, casos } = this.config;
 
     try {
       if (chamada.name === 'abrir_caso') {
         const entrada = chamada.input as EntradaAbrirCaso;
-        const { numero } = await casos.abrir({ ...entrada, conversationId: conversa.id });
+        const { numero } = await casos.abrir({ ...entrada, conversationId: conversa.id, ip });
 
         conversa.abriuCaso = true;
         conversa.numeroCaso = numero;

@@ -1,6 +1,8 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import { MotorDeConversa } from '@/lib/conversation/engine';
-import { criarStore } from '@/lib/conversation/criar-store';
+import { criarStore, persistenciaReal } from '@/lib/conversation/criar-store';
+import { comLimiteDeChamados } from '@/lib/conversation/limite-de-chamados';
+import { BlobLimitador, MemoriaLimitador, ipDaRequisicao, type Limitador } from '@/lib/rate-limit';
 import { BundledSource } from '@/lib/kb/bundled-source';
 import { criarAbridorSalesforce } from '@/lib/salesforce/case-adapter';
 
@@ -28,6 +30,20 @@ interface Corpo {
  * avaliar isto no topo do modulo quebraria o build antes de qualquer chamada.
  */
 let motor: MotorDeConversa | null = null;
+let limitador: Limitador | null = null;
+
+/** Quanto cada IP pode gastar. Numeros folgados para uso humano, apertados para bot. */
+const LIMITES = {
+  mensagens: Number(process.env.LIMITE_MENSAGENS ?? 30),
+  janelaDeMensagens: Number(process.env.LIMITE_MENSAGENS_JANELA_S ?? 600),
+  chamados: Number(process.env.LIMITE_CHAMADOS ?? 3),
+  janelaDeChamados: Number(process.env.LIMITE_CHAMADOS_JANELA_S ?? 3600),
+} as const;
+
+function obterLimitador(): Limitador {
+  limitador ??= persistenciaReal() ? new BlobLimitador() : new MemoriaLimitador();
+  return limitador;
+}
 
 function obterMotor(): MotorDeConversa {
   if (motor) return motor;
@@ -42,14 +58,19 @@ function obterMotor(): MotorDeConversa {
     tenantId: process.env.TENANT_ID ?? 'totalpass',
     knowledge: new BundledSource(),
     store: criarStore(),
-    casos: criarAbridorSalesforce({
-      loginUrl: exigir('SF_LOGIN_URL'),
-      clientId: exigir('SF_CLIENT_ID'),
-      clientSecret: exigir('SF_CLIENT_SECRET'),
-      origin: process.env.SF_CASE_ORIGIN ?? 'Webchat',
-      campoConversationId: process.env.SF_CAMPO_CONVERSATION_ID ?? 'Conversation_Id__c',
-      campoIdentidadeVerificada: process.env.SF_CAMPO_IDENTIDADE_VERIFICADA ?? null,
-    }),
+    casos: comLimiteDeChamados(
+      criarAbridorSalesforce({
+        loginUrl: exigir('SF_LOGIN_URL'),
+        clientId: exigir('SF_CLIENT_ID'),
+        clientSecret: exigir('SF_CLIENT_SECRET'),
+        origin: process.env.SF_CASE_ORIGIN ?? 'Webchat',
+        campoConversationId: process.env.SF_CAMPO_CONVERSATION_ID ?? 'Conversation_Id__c',
+        campoIdentidadeVerificada: process.env.SF_CAMPO_IDENTIDADE_VERIFICADA ?? null,
+      }),
+      obterLimitador(),
+      LIMITES.chamados,
+      LIMITES.janelaDeChamados,
+    ),
   });
 
   return motor;
@@ -71,6 +92,30 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ erro: 'conversationId e pergunta são obrigatórios' }, { status: 400 });
   }
 
+  /**
+   * Limite de mensagens por IP.
+   *
+   * O limite de chamados protege a fila do cliente; este protege o custo. Cada
+   * mensagem e uma chamada ao modelo com a base inteira no contexto, e um
+   * script em laco gasta dinheiro de verdade sem precisar de ma intencao.
+   */
+  const ip = ipDaRequisicao(request);
+  const veredito = await obterLimitador().consumir(
+    `chat/${ip}`,
+    LIMITES.mensagens,
+    LIMITES.janelaDeMensagens,
+  );
+
+  if (!veredito.permitido) {
+    console.warn(
+      JSON.stringify({ evento: 'limite_de_mensagens', ip, usados: veredito.usados, limite: veredito.limite }),
+    );
+    return Response.json(
+      { erro: 'Muitas mensagens em pouco tempo. Tente de novo daqui a pouco.' },
+      { status: 429, headers: { 'Retry-After': String(veredito.reiniciaEm) } },
+    );
+  }
+
   const stream = new ReadableStream({
     async start(controller) {
       try {
@@ -78,6 +123,7 @@ export async function POST(request: Request): Promise<Response> {
           corpo.conversationId,
           corpo.historico ?? [],
           corpo.pergunta,
+          ip,
         );
 
         for await (const evento of eventos) {
