@@ -38,7 +38,7 @@ export default function Portal() {
   return (
     <div className="min-h-dvh bg-tp-nevoa font-[family-name:var(--font-poppins)] text-tp-grafite">
       <p className="bg-tp-verde-claro px-4 py-1.5 text-center text-[11px] font-semibold tracking-wide text-tp-noite">
-        SIMULAÇÃO — tela de demonstração criada pela Kliente 360. Não é o portal em produção.
+        DEMONSTRAÇÃO KLIENTE 360
       </p>
 
       <header className="sticky top-0 z-10 border-b border-tp-borda bg-tp-noite">
@@ -57,9 +57,9 @@ export default function Portal() {
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-3">
-            <span className="hidden text-[12px] text-white/60 sm:inline">Construtora Meridiano</span>
+            <span className="hidden text-[12px] text-white/60 sm:inline">Empresa Teste</span>
             <span className="grid h-8 w-8 place-items-center rounded-full bg-tp-verde text-[13px] font-bold text-tp-noite">
-              CM
+              ET
             </span>
           </div>
         </div>

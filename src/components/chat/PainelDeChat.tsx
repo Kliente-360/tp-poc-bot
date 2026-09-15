@@ -1,15 +1,23 @@
 'use client';
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { AvatarLets } from './AvatarLets';
 import estilos from './painel.module.css';
 import { useConversa } from './useConversa';
 
-const SAUDACAO =
-  'Oi! Eu sou a Léts, assistente da TotalPass. Posso ajudar com plano, check-in, ' +
-  'academias, cadastro no Portal RH e o que mais aparecer. O que você precisa?';
+const SAUDACAO = 'Oi! Eu sou a Léts, assistente virtual da TotalPass. Como posso te ajudar?';
 
-const SUGESTOES = ['Como faço o check-in?', 'Quantos dependentes posso cadastrar?', 'Quero abrir um chamado'];
+/**
+ * Sugestoes so da secao Empresa, que e o publico do portal.
+ *
+ * A base carregada e maior — Alunos, LGPD, Quem somos — e a Lets responde tudo
+ * isso normalmente. As sugestoes e que sao a porta de entrada, e a porta de
+ * entrada e de quem administra o beneficio, nao de quem usa a academia.
+ */
+const SUGESTOES = [
+  'Como cadastrar colaboradores?',
+  'O que são os boletos Fee e Coparticipação?',
+  'Como funciona o distrato com a TotalPass?',
+];
 
 /**
  * Painel de conversa.
@@ -71,14 +79,14 @@ export function PainelDeChat() {
         aria-expanded={aberto}
         aria-label={aberto ? 'Fechar conversa com a Léts' : 'Abrir conversa com a Léts'}
       >
-        {aberto ? <IconeFechar /> : <AvatarLets tamanho={58} />}
+        {aberto ? <IconeFechar /> : <IconeBalao />}
       </button>
 
       {aberto && (
         <section className={estilos.painel} aria-label="Conversa com a Léts">
           <header className={estilos.topo}>
             <span className={estilos.avatar} aria-hidden="true">
-              <AvatarLets tamanho={38} />
+              L
             </span>
             <div>
               <p className={estilos.nome}>Léts</p>
@@ -163,10 +171,24 @@ export function PainelDeChat() {
             </button>
           </form>
 
-          <p className={estilos.aviso}>Simulação — Kliente 360</p>
+          <p className={estilos.aviso}>Demonstração IA Kliente 360</p>
         </section>
       )}
     </>
+  );
+}
+
+function IconeBalao() {
+  return (
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">
+      <path
+        d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.3-.6L3 21l1.8-4.9A8.2 8.2 0 0 1 3.6 11.5a8.4 8.4 0 0 1 9-8.4 8.4 8.4 0 0 1 8.4 8.4Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 

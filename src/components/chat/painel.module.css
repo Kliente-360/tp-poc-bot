@@ -45,18 +45,12 @@
   color: var(--lets-noite);
   box-shadow: var(--lets-sombra);
   cursor: pointer;
-  overflow: hidden;
-  transition: transform 0.18s ease;
+  transition: transform 0.18s ease, background 0.18s ease;
 }
 
 .flutuante:hover {
-  transform: translateY(-2px) scale(1.04);
-}
-
-/* Aberto, o botao vira o X e precisa do fundo verde de volta. */
-.flutuante[aria-expanded='true'] {
-  background: var(--lets-noite);
-  color: #fff;
+  background: var(--lets-verde-escuro);
+  transform: translateY(-2px);
 }
 
 .flutuante:focus-visible {
@@ -118,12 +112,16 @@
 }
 
 .avatar {
-  display: block;
+  display: grid;
+  place-items: center;
   width: 38px;
   height: 38px;
   flex-shrink: 0;
   border-radius: 50%;
-  overflow: hidden;
+  background: var(--lets-verde);
+  color: var(--lets-noite);
+  font-weight: 700;
+  font-size: 17px;
 }
 
 .nome { margin: 0; font-size: 15px; font-weight: 600; }
