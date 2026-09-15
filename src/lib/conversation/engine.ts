@@ -1,8 +1,13 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { KnowledgeSource } from '../kb/types.js';
-import { MODELO, montarSystemPrompt } from '../prompt/system-prompt.js';
-import { TOOLS, type EntradaAbrirCaso, type EntradaRegistrarNaoRespondida } from './tools.js';
-import { novaConversa, type Conversa, type ConversationStore } from './types.js';
+import type { KnowledgeSource } from '../kb/types';
+import { MODELO, montarSystemPrompt } from '../prompt/system-prompt';
+import { TOOLS, type EntradaAbrirCaso, type EntradaRegistrarNaoRespondida } from './tools';
+import { FiltroDeArtigos } from './stream-filter';
+import { novaConversa, type Conversa, type ConversationStore } from './types';
+
+export type EventoDeStream =
+  | { tipo: 'texto'; texto: string }
+  | { tipo: 'fim'; turno: Turno; conversa: Conversa; mensagens: Anthropic.MessageParam[] };
 
 /**
  * O motor nao conhece o Salesforce. Depende so disto, para que a bateria de
@@ -148,6 +153,90 @@ export class MotorDeConversa {
     await store.salvar(conversa);
 
     return { turno, mensagens, conversa };
+  }
+
+  /**
+   * Mesma logica de `responder`, emitindo texto conforme chega.
+   *
+   * O filtro de artigos e um so para o turno inteiro: com tool use o modelo
+   * produz mais de um bloco de texto, e o marcador pode cair em qualquer um.
+   */
+  async *responderEmStream(
+    conversationId: string,
+    historico: Anthropic.MessageParam[],
+    pergunta: string,
+  ): AsyncGenerator<EventoDeStream> {
+    const { tenantId, store } = this.config;
+    const conversa =
+      (await store.carregar(tenantId, conversationId)) ?? novaConversa(tenantId, conversationId);
+
+    const mensagens: Anthropic.MessageParam[] = [...historico, { role: 'user', content: pergunta }];
+    const filtro = new FiltroDeArtigos();
+    const turno: Turno = {
+      resposta: '',
+      artigosUsados: [],
+      abriuCaso: false,
+      numeroCaso: null,
+      registrouNaoRespondida: false,
+      deteccaoDoServidor: false,
+      uso: { entrada: 0, escritaDeCache: 0, leituraDeCache: 0, saida: 0 },
+    };
+
+    for (let volta = 0; volta < 6; volta++) {
+      const stream = this.client.messages.stream({
+        model: MODELO,
+        max_tokens: 4096,
+        system: await this.systemPrompt(),
+        tools: TOOLS,
+        messages: mensagens,
+        ...(this.config.effort ? { output_config: { effort: this.config.effort } } : {}),
+      });
+
+      for await (const evento of stream) {
+        if (evento.type !== 'content_block_delta' || evento.delta.type !== 'text_delta') continue;
+        const visivel = filtro.empurrar(evento.delta.text);
+        if (visivel) {
+          turno.resposta += visivel;
+          yield { tipo: 'texto', texto: visivel };
+        }
+      }
+
+      const resposta = await stream.finalMessage();
+      turno.uso.entrada += resposta.usage.input_tokens;
+      turno.uso.saida += resposta.usage.output_tokens;
+      turno.uso.escritaDeCache += resposta.usage.cache_creation_input_tokens ?? 0;
+      turno.uso.leituraDeCache += resposta.usage.cache_read_input_tokens ?? 0;
+
+      mensagens.push({ role: 'assistant', content: resposta.content });
+
+      const chamadas = resposta.content.filter(
+        (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
+      );
+      if (resposta.stop_reason !== 'tool_use' || chamadas.length === 0) break;
+
+      const resultados: Anthropic.ToolResultBlockParam[] = [];
+      for (const chamada of chamadas) {
+        resultados.push(await this.executar(chamada, conversa, turno));
+      }
+      mensagens.push({ role: 'user', content: resultados });
+    }
+
+    const resto = filtro.encerrar();
+    if (resto) {
+      turno.resposta += resto;
+      yield { tipo: 'texto', texto: resto };
+    }
+
+    turno.artigosUsados = filtro.artigos;
+    turno.resposta = turno.resposta.trim();
+    await this.redeDeSeguranca(turno, conversa, pergunta);
+
+    conversa.turnos += 1;
+    conversa.ultimoTurnoEm = new Date().toISOString();
+    conversa.artigosUsados.push(turno.artigosUsados);
+    await store.salvar(conversa);
+
+    yield { tipo: 'fim', turno, conversa, mensagens };
   }
 
   private async executar(

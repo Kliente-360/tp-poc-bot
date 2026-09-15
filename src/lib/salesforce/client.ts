@@ -1,4 +1,4 @@
-import type { SalesforceAuth } from './auth.js';
+import type { SalesforceAuth } from './auth';
 
 export const SF_API_VERSION = 'v62.0';
 

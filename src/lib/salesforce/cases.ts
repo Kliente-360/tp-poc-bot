@@ -1,4 +1,4 @@
-import { SalesforceApiError, type SalesforceClient } from './client.js';
+import { SalesforceApiError, type SalesforceClient } from './client';
 
 /** Valor do canal na picklist `Origin`. Configuravel: nem toda org tem `Webchat`. */
 export const DEFAULT_CASE_ORIGIN = 'Webchat';

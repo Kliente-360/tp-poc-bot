@@ -1,6 +1,6 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { ordenarArtigos, type Artigo, type KnowledgeSource } from './types.js';
+import { ordenarArtigos, type Artigo, type KnowledgeSource } from './types';
 
 /**
  * Le os artigos de /content/kb.

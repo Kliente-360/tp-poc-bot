@@ -5,7 +5,7 @@ import {
   type ConversationStore,
   type Metricas,
   type PerguntaNaoRespondida,
-} from './types.js';
+} from './types';
 
 /**
  * Implementacao em memoria, para scripts e testes.

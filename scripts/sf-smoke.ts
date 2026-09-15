@@ -6,10 +6,10 @@
  * Autentica por Client Credentials, abre um Case de teste (prefixado com [POC])
  * e grava um comentario interno. Imprime tudo que foi feito.
  */
-import { ClientCredentialsAuth, SalesforceAuthError } from '../src/lib/salesforce/auth.js';
-import { SalesforceClient } from '../src/lib/salesforce/client.js';
-import { CaseService } from '../src/lib/salesforce/cases.js';
-import { config } from '../src/lib/config.js';
+import { ClientCredentialsAuth, SalesforceAuthError } from '../src/lib/salesforce/auth';
+import { SalesforceClient } from '../src/lib/salesforce/client';
+import { CaseService } from '../src/lib/salesforce/cases';
+import { config } from '../src/lib/config';
 
 const ok = (m: string) => console.log(`  \x1b[32m✓\x1b[0m ${m}`);
 const info = (k: string, v: string) => console.log(`      ${k.padEnd(18)} ${v}`);

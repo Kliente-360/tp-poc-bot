@@ -7,8 +7,8 @@
  * A contagem vem de messages.count_tokens, nao de estimativa por palavras.
  */
 import Anthropic from '@anthropic-ai/sdk';
-import { FilesystemSource } from '../src/lib/kb/filesystem-source.js';
-import { MODELO, montarSystemPrompt } from '../src/lib/prompt/system-prompt.js';
+import { FilesystemSource } from '../src/lib/kb/filesystem-source';
+import { MODELO, montarSystemPrompt } from '../src/lib/prompt/system-prompt';
 
 /** Claude Sonnet 5, por 1M de tokens. */
 const PRECO = { entrada: 2.0, saida: 10.0, escritaDeCache: 2.5, leituraDeCache: 0.2 };

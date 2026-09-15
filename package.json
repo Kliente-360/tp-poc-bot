@@ -6,12 +6,15 @@
   "type": "module",
   "scripts": {
     "sf:smoke": "tsx --env-file=.env.local scripts/sf-smoke.ts",
-    "kb:fetch": "tsx scripts/fetch-kb.ts",
+    "kb:fetch": "tsx scripts/fetch-kb.ts && tsx scripts/build-kb-bundle.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "kb:prompt": "tsx --env-file=.env.local scripts/build-prompt.ts",
-    "chat:test": "tsx --env-file=.env.local scripts/chat-test.ts"
+    "chat:test": "tsx --env-file=.env.local scripts/chat-test.ts",
+    "kb:bundle": "tsx scripts/build-kb-bundle.ts",
+    "prebuild": "tsx scripts/build-kb-bundle.ts",
+    "test:filtro": "tsx scripts/test-stream-filter.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

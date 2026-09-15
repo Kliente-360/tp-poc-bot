@@ -7,10 +7,10 @@
  * Nenhum chamado real e criado: o abridor e falso.
  */
 import type Anthropic from '@anthropic-ai/sdk';
-import { FilesystemSource } from '../src/lib/kb/filesystem-source.js';
-import { InMemoryStore } from '../src/lib/conversation/memory-store.js';
-import { MotorDeConversa, type AbridorDeCaso } from '../src/lib/conversation/engine.js';
-import { emailPlausivel } from '../src/lib/conversation/tools.js';
+import { FilesystemSource } from '../src/lib/kb/filesystem-source';
+import { InMemoryStore } from '../src/lib/conversation/memory-store';
+import { MotorDeConversa, type AbridorDeCaso } from '../src/lib/conversation/engine';
+import { emailPlausivel } from '../src/lib/conversation/tools';
 
 interface Caso {
   grupo: string;
