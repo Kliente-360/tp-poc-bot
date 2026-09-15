@@ -1,5 +1,7 @@
+import { cookies } from 'next/headers';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { COOKIE_DE_SESSAO, lerSessao } from '@/lib/auth/sessao';
 import { PainelDeChat } from '@/components/chat/PainelDeChat';
 
 /**
@@ -21,7 +23,14 @@ const MENU = [
   { rotulo: 'Métricas MVP', href: '/metricas' },
 ] as const;
 
-export function LayoutPortal({ ativo, children }: { ativo: string; children: ReactNode }) {
+export async function LayoutPortal({ ativo, children }: { ativo: string; children: ReactNode }) {
+  // Quem esta logado. O "Empresa Teste" ao lado e ficcao do portal simulado;
+  // isto aqui e a conta de verdade, para nao haver duvida de quem esta vendo.
+  const sessao = await lerSessao(
+    (await cookies()).get(COOKIE_DE_SESSAO)?.value,
+    process.env.SESSION_SECRET ?? '',
+  );
+
   return (
     <div className="min-h-dvh bg-tp-nevoa font-[family-name:var(--font-poppins)] text-tp-grafite">
       <p className="bg-tp-verde-claro px-4 py-1.5 text-center text-[11px] font-semibold tracking-wide text-tp-noite">
@@ -48,6 +57,16 @@ export function LayoutPortal({ ativo, children }: { ativo: string; children: Rea
             <span className="grid h-8 w-8 place-items-center rounded-full bg-tp-verde text-[13px] font-bold text-tp-noite">
               ET
             </span>
+            {sessao && (
+              <Link
+                href="/api/auth/logout"
+                prefetch={false}
+                title={`Sair de ${sessao.email}`}
+                className="text-[12px] text-white/50 transition-colors hover:text-tp-verde"
+              >
+                Sair
+              </Link>
+            )}
           </div>
         </div>
       </header>

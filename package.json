@@ -15,7 +15,8 @@
     "kb:bundle": "tsx scripts/build-kb-bundle.ts",
     "prebuild": "tsx scripts/build-kb-bundle.ts",
     "test:filtro": "tsx scripts/test-stream-filter.ts",
-    "test:classificacao": "tsx scripts/test-classificacao.ts"
+    "test:classificacao": "tsx scripts/test-classificacao.ts",
+    "test:auth": "tsx scripts/test-auth.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
