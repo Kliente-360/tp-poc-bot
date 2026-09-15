@@ -26,3 +26,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 bundle.generated.ts
+
+# gerado pelo netlify dev (Edge Functions rodam em Deno)
+deno.lock
