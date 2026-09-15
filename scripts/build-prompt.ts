@@ -10,8 +10,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { FilesystemSource } from '../src/lib/kb/filesystem-source';
 import { MODELO, montarSystemPrompt } from '../src/lib/prompt/system-prompt';
 
-/** Claude Sonnet 5, por 1M de tokens. */
-const PRECO = { entrada: 2.0, saida: 10.0, escritaDeCache: 2.5, leituraDeCache: 0.2 };
+/** Claude Haiku 4.5, por 1M de tokens. */
+const PRECO = { entrada: 1.0, saida: 5.0, escritaDeCache: 1.25, leituraDeCache: 0.1 };
 
 const titulo = (t: string) => console.log(`\n\x1b[1m${t}\x1b[0m`);
 const linha = (k: string, v: string) => console.log(`  ${k.padEnd(34)} ${v}`);

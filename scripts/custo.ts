@@ -14,8 +14,8 @@ import { InMemoryStore } from '../src/lib/conversation/memory-store';
 import { FilesystemSource } from '../src/lib/kb/filesystem-source';
 import { MODELO } from '../src/lib/prompt/system-prompt';
 
-/** Claude Sonnet 5, US$ por 1M de tokens. */
-const PRECO = { entrada: 2.0, saida: 10.0, escritaDeCache: 2.5, leituraDeCache: 0.2 };
+/** Claude Haiku 4.5, US$ por 1M de tokens. */
+const PRECO = { entrada: 1.0, saida: 5.0, escritaDeCache: 1.25, leituraDeCache: 0.1 };
 
 /** Conversa plausivel de um RH: pergunta, desdobra, e termina em chamado. */
 const TURNOS = [

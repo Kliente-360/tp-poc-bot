@@ -18,6 +18,11 @@ const CASOS: Array<{ nome: string; deltas: string[]; visivel: string; ids: strin
   { nome: 'marcador aberto que nunca fecha', deltas: ['Oi <artigos>KB-3'], visivel: 'Oi ', ids: '' },
   { nome: 'tag no singular (Haiku emitiu assim)', deltas: ['<artigo>CLI-AB12</artigo>Olá!'], visivel: 'Olá!', ids: 'CLI-AB12' },
   { nome: 'singular fatiado byte a byte', deltas: '<artigo>KB-1</artigo>Oi'.split(''), visivel: 'Oi', ids: 'KB-1' },
+  // O filtro nao apara espaco — quem faz isso e o motor, ao emitir o primeiro
+  // pedaco visivel do turno. Aqui a quebra depois da tag e esperada.
+  { nome: 'fechamento com erro de digitação (Haiku)', deltas: ['<artigos></artios>\n\nEntendi.'], visivel: '\n\nEntendi.', ids: '' },
+  { nome: 'fechamento errado com ids', deltas: ['<artigos>KB-9</artios>Oi'], visivel: 'Oi', ids: 'KB-9' },
+  { nome: 'espaço dentro da tag', deltas: ['< artigos >KB-1</ artigos >Oi'], visivel: 'Oi', ids: 'KB-1' },
   { nome: 'dois marcadores (turno com tool use)', deltas: ['<artigos>KB-1</artigos>a<artigos>KB-2</artigos>b'], visivel: 'ab', ids: 'KB-1,KB-2' },
 ];
 

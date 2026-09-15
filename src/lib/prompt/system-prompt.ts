@@ -4,8 +4,18 @@ import { ordenarArtigos, type Artigo } from '../kb/types';
 /**
  * Confirmado em docs.claude.com, nao assumido de memoria.
  * O identificador nao leva sufixo de data.
+ *
+ * Haiku 4.5 escolhido por medicao (npm run modelos): empatou com o Sonnet 5
+ * em acerto nas doze perguntas da bateria comparativa, a 35% do custo. A
+ * diferenca observada foi em seguir formato literal, nao em conteudo — e o
+ * filtro de streaming passou a tolerar a variacao de tag que ele produziu.
+ *
+ * Duas particularidades deste modelo, para quem mexer aqui depois:
+ *   - `output_config.effort` NAO e aceito; usar retorna erro.
+ *   - contexto de 200K, e nao 1M. Com a base em ~31k sobra folga, mas o
+ *     gatilho de revisao fica mais perto do que era com o Sonnet.
  */
-export const MODELO = 'claude-sonnet-5';
+export const MODELO = 'claude-haiku-4-5';
 
 /**
  * Instrucoes. Vem antes dos dados, e nunca depois: o que o modelo le por ultimo

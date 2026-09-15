@@ -41,7 +41,7 @@ export interface Turno {
  * produz mais de um bloco de texto, e o marcador pode cair em qualquer um
  * deles. Ancorar no inicio perdia o registro em todo turno com ferramenta.
  */
-const LINHA_DE_ARTIGOS = /<artigos?>([\s\S]*?)<\/artigos?>/g;
+const LINHA_DE_ARTIGOS = /<\/?\s*arti\w*\s*>([\s\S]*?)<\/?\s*arti\w*\s*>/g;
 
 /**
  * Rede de seguranca da metrica de perguntas nao respondidas.
@@ -147,6 +147,21 @@ export class MotorDeConversa {
     this.client = config.client ?? new Anthropic();
   }
 
+  /**
+   * `effort` nao e aceito pelo Haiku 4.5 — a requisicao volta erro. Ignorar
+   * com aviso e melhor que quebrar a conversa por causa de uma alavanca de
+   * ajuste que nem sempre esta disponivel.
+   */
+  private opcoesDeEffort() {
+    if (!this.config.effort) return {};
+    const modelo = this.config.modelo ?? MODELO;
+    if (modelo.includes('haiku')) {
+      console.warn(`[motor] ${modelo} não aceita effort — parâmetro ignorado.`);
+      return {};
+    }
+    return { output_config: { effort: this.config.effort } };
+  }
+
   /** Carrega a base uma vez por processo. Sem leitura de disco por requisicao. */
   private async systemPrompt(): Promise<Anthropic.TextBlockParam[]> {
     this.system ??= montarSystemPrompt(await this.config.knowledge.listarArtigos());
@@ -181,7 +196,7 @@ export class MotorDeConversa {
         system: await this.systemPrompt(),
         tools: TOOLS,
         messages: mensagens,
-        ...(this.config.effort ? { output_config: { effort: this.config.effort } } : {}),
+        ...this.opcoesDeEffort(),
       });
 
       turno.uso.entrada += resposta.usage.input_tokens;
@@ -258,7 +273,7 @@ export class MotorDeConversa {
         system: await this.systemPrompt(),
         tools: TOOLS,
         messages: mensagens,
-        ...(this.config.effort ? { output_config: { effort: this.config.effort } } : {}),
+        ...this.opcoesDeEffort(),
       });
 
       // Depois de uma ferramenta o modelo volta a escrever, e os dois textos
