@@ -46,6 +46,20 @@ export function PainelDeChat() {
     if (aberto) campo.current?.focus();
   }, [aberto]);
 
+  /**
+   * Terminou de responder, o foco volta para o campo.
+   *
+   * Sem isto a pessoa precisa clicar na caixa a cada turno, o que quebra o
+   * ritmo da conversa. O ref guarda o estado anterior porque o que interessa
+   * e a transicao de "enviando" para "parado", nao o estado em si — focar a
+   * cada render roubaria o foco de quem estivesse em outro lugar da tela.
+   */
+  const estavaEnviando = useRef(false);
+  useEffect(() => {
+    if (estavaEnviando.current && !enviando && aberto) campo.current?.focus();
+    estavaEnviando.current = enviando;
+  }, [enviando, aberto]);
+
   // Esc fecha, e o foco volta para o botao — senao quem navega por teclado
   // fica perdido no fim do documento.
   useEffect(() => {

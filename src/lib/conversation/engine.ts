@@ -61,6 +61,17 @@ const SINAIS_DE_FORA_DE_ESCOPO = [
   /meu conhecimento (é|e) s[óo]\b[^.!?]{0,25}\bTotalPass/i,
 ];
 
+/**
+ * Valores de rascunho que o modelo as vezes manda quando erra a chamada.
+ * Vao parar na lista de conteudo do cliente como lixo.
+ */
+const RASCUNHOS = /^(placeholder|teste|test|n\/?a|exemplo|string|pergunta|todo|xxx+|\.+|-+)$/i;
+
+function perguntaAproveitavel(texto: string): boolean {
+  const limpo = texto.trim();
+  return limpo.length >= 8 && !RASCUNHOS.test(limpo);
+}
+
 const SINAIS_DE_ABSTENCAO = [
   /n[ãa]o (tenho|encontrei|achei|localizei)\b[^.!?]{0,40}\b(informa[çc][ãa]o|dado|detalhe|resposta)/i,
   /n[ãa]o (est[áa]|consta|tenho)\b[^.!?]{0,30}\b(na (minha )?base|no meu material|aqui comigo)/i,
@@ -148,7 +159,7 @@ export class MotorDeConversa {
       // Todos os tool_result voltam numa unica mensagem de usuario.
       const resultados: Anthropic.ToolResultBlockParam[] = [];
       for (const chamada of chamadas) {
-        resultados.push(await this.executar(chamada, conversa, turno));
+        resultados.push(await this.executar(chamada, conversa, turno, pergunta));
       }
       mensagens.push({ role: 'user', content: resultados });
     }
@@ -213,11 +224,17 @@ export class MotorDeConversa {
         let visivel = filtro.empurrar(evento.delta.text);
         if (!visivel) continue;
 
-        if (primeiroDaVolta && turno.resposta.length > 0) {
+        if (turno.resposta.length === 0) {
+          // A resposta comeca com a linha de registro interno, e a quebra que
+          // vem depois dela sobrevive ao corte da tag. Como o balao preserva
+          // espaco em branco, isso abriria a resposta com um vao.
+          visivel = visivel.replace(/^\s+/, '');
+          if (!visivel) continue;
+        } else if (primeiroDaVolta) {
           visivel = `\n\n${visivel.replace(/^\s+/, '')}`;
         }
-        primeiroDaVolta = false;
 
+        primeiroDaVolta = false;
         turno.resposta += visivel;
         yield { tipo: 'texto', texto: visivel };
       }
@@ -237,7 +254,7 @@ export class MotorDeConversa {
 
       const resultados: Anthropic.ToolResultBlockParam[] = [];
       for (const chamada of chamadas) {
-        resultados.push(await this.executar(chamada, conversa, turno, ip));
+        resultados.push(await this.executar(chamada, conversa, turno, pergunta, ip));
       }
       mensagens.push({ role: 'user', content: resultados });
     }
@@ -264,6 +281,7 @@ export class MotorDeConversa {
     chamada: Anthropic.ToolUseBlock,
     conversa: Conversa,
     turno: Turno,
+    perguntaDoUsuario: string,
     ip?: string,
   ): Promise<Anthropic.ToolResultBlockParam> {
     const { tenantId, store, casos } = this.config;
@@ -284,8 +302,14 @@ export class MotorDeConversa {
 
       if (chamada.name === 'registrar_nao_respondida') {
         const { pergunta, motivo } = chamada.input as EntradaRegistrarNaoRespondida;
+
+        // O modelo ja mandou "placeholder" aqui. Em vez de gravar o rascunho
+        // ou descartar o registro, cai para o que a pessoa realmente escreveu:
+        // o sinal e preservado e a lista continua legivel.
+        const texto = perguntaAproveitavel(pergunta) ? pergunta : perguntaDoUsuario;
+
         await store.registrarNaoRespondida(tenantId, {
-          pergunta,
+          pergunta: texto,
           conversationId: conversa.id,
           registradaEm: new Date().toISOString(),
           detectadaPeloServidor: false,
