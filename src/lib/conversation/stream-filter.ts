@@ -1,5 +1,17 @@
-const ABRE = '<artigos>';
-const FECHA = '</artigos>';
+/**
+ * Aceita `<artigos>` e `<artigo>`.
+ *
+ * O Haiku 4.5 emitiu a tag no singular numa medicao, e o custo foi duplo: o
+ * marcador apareceu na tela e o id do artigo sumiu do log de auditoria. Tolerar
+ * a variacao e mais barato que confiar que todo modelo escreva a tag exata.
+ */
+const VARIANTES = [
+  { abre: '<artigos>', fecha: '</artigos>' },
+  { abre: '<artigo>', fecha: '</artigo>' },
+] as const;
+
+const ABRE = VARIANTES[0].abre;
+const FECHA = VARIANTES[0].fecha;
 
 /**
  * Separa a linha de registro interno do texto visivel, durante o streaming.
@@ -26,7 +38,7 @@ export class FiltroDeArtigos {
     let visivel = '';
 
     for (;;) {
-      const inicio = this.buffer.indexOf(ABRE);
+      const { abre, fecha, inicio } = this.proximoMarcador();
 
       if (inicio === -1) {
         const retido = this.tamanhoDoSufixoAmbiguo(this.buffer);
@@ -35,7 +47,7 @@ export class FiltroDeArtigos {
         return visivel;
       }
 
-      const fim = this.buffer.indexOf(FECHA, inicio);
+      const fim = this.buffer.indexOf(fecha, inicio);
       if (fim === -1) {
         // Marcador aberto e incompleto: emite o que veio antes e segura o resto.
         visivel += this.buffer.slice(0, inicio);
@@ -43,20 +55,33 @@ export class FiltroDeArtigos {
         return visivel;
       }
 
-      for (const id of this.buffer.slice(inicio + ABRE.length, fim).split(',')) {
+      for (const id of this.buffer.slice(inicio + abre.length, fim).split(',')) {
         const limpo = id.trim();
         if (limpo.length > 0) this.ids.add(limpo);
       }
 
       visivel += this.buffer.slice(0, inicio);
-      this.buffer = this.buffer.slice(fim + FECHA.length);
+      this.buffer = this.buffer.slice(fim + fecha.length);
     }
+  }
+
+  /** Primeiro marcador de qualquer variante presente no buffer. */
+  private proximoMarcador(): { abre: string; fecha: string; inicio: number } {
+    let escolhido: { abre: string; fecha: string; inicio: number } = { abre: ABRE, fecha: FECHA, inicio: -1 };
+    for (const v of VARIANTES) {
+      const i = this.buffer.indexOf(v.abre);
+      if (i !== -1 && (escolhido.inicio === -1 || i < escolhido.inicio)) {
+        escolhido = { abre: v.abre, fecha: v.fecha, inicio: i };
+      }
+    }
+    return escolhido;
   }
 
   /** Libera o que sobrou. Chamado quando o stream termina. */
   encerrar(): string {
     // Marcador aberto que nunca fechou nao e texto: o modelo cortou no meio.
-    const resto = this.buffer.includes(ABRE) ? this.buffer.slice(0, this.buffer.indexOf(ABRE)) : this.buffer;
+    const { inicio } = this.proximoMarcador();
+    const resto = inicio !== -1 ? this.buffer.slice(0, inicio) : this.buffer;
     this.buffer = '';
     return resto;
   }
@@ -69,7 +94,8 @@ export class FiltroDeArtigos {
   private tamanhoDoSufixoAmbiguo(texto: string): number {
     const maximo = Math.min(ABRE.length - 1, texto.length);
     for (let n = maximo; n > 0; n--) {
-      if (ABRE.startsWith(texto.slice(texto.length - n))) return n;
+      const sufixo = texto.slice(texto.length - n);
+      if (VARIANTES.some((v) => v.abre.startsWith(sufixo))) return n;
     }
     return 0;
   }

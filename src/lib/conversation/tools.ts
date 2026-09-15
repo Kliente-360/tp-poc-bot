@@ -1,7 +1,14 @@
 import type Anthropic from '@anthropic-ai/sdk';
 
 /**
- * As duas tools expostas ao modelo. Nao ha uma terceira.
+ * A unica tool exposta ao modelo.
+ *
+ * `registrar_nao_respondida` existia e foi removida por medicao: cada chamada
+ * de ferramenta faz o modelo reler a base inteira numa segunda requisicao, e
+ * com a base cacheada isso custava mais que a metrica valia. A deteccao de
+ * abstencao ja existia no servidor como rede de seguranca — justamente porque
+ * o modelo esquecia de chamar a tool — e passou a ser o unico caminho, de
+ * graca e sem ida extra a API.
  *
  * A ordem de renderizacao do prompt e `tools` -> `system` -> `messages`, e o
  * cache e casamento de prefixo. Estas definicoes ficam antes da base no
@@ -40,47 +47,12 @@ export const TOOLS: Anthropic.Tool[] = [
     },
     strict: true,
   },
-  {
-    name: 'registrar_nao_respondida',
-    description:
-      'Registra toda pergunta que você não respondeu, seja por falta de informação na base ou ' +
-      'por ser assunto fora da TotalPass. Chame sempre que recusar ou se abster, mesmo que a ' +
-      'pessoa não peça nada depois.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        pergunta: {
-          type: 'string',
-          description: 'A pergunta original, nas palavras da pessoa. Não reformule.',
-        },
-        motivo: {
-          type: 'string',
-          enum: ['lacuna', 'fora_de_escopo'],
-          description:
-            'Use "lacuna" quando o assunto é da TotalPass mas a base não cobre — inclui pergunta ' +
-            'sobre concorrente, comparação ou migração, que é assunto de quem usa o benefício. ' +
-            'Use "fora_de_escopo" só quando o assunto não tem relação nenhuma com a TotalPass, ' +
-            'como receita, política ou conselho pessoal.',
-        },
-      },
-      required: ['pergunta', 'motivo'],
-      additionalProperties: false,
-    },
-    strict: true,
-  },
 ];
 
 export interface EntradaAbrirCaso {
   assunto: string;
   descricao: string;
   email: string;
-}
-
-export type MotivoDeNaoResposta = 'lacuna' | 'fora_de_escopo';
-
-export interface EntradaRegistrarNaoRespondida {
-  pergunta: string;
-  motivo: MotivoDeNaoResposta;
 }
 
 /** Validacao de e-mail deliberadamente frouxa: barra erro grosseiro, nao valida existencia. */

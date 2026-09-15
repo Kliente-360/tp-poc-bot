@@ -17,7 +17,9 @@
     "test:filtro": "tsx scripts/test-stream-filter.ts",
     "test:classificacao": "tsx scripts/test-classificacao.ts",
     "test:auth": "tsx scripts/test-auth.ts",
-    "kb:cliente": "tsx scripts/import-cliente.ts && tsx scripts/build-kb-bundle.ts"
+    "kb:cliente": "tsx scripts/import-cliente.ts && tsx scripts/build-kb-bundle.ts",
+    "custo": "tsx --env-file=.env.local scripts/custo.ts",
+    "modelos": "tsx --env-file=.env.local scripts/comparar-modelos.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

@@ -22,10 +22,14 @@ const DESTINO = join(process.cwd(), 'content', 'kb');
  * Escopo definido com o cliente. Ficam de fora:
  *   Academias    — publico da oferta (academia parceira), nao do portal
  *   Integradores — time tecnico de ERP
+ *   Alunos       — o colaborador que usa a academia, nao o RH que administra
+ *                  o beneficio. Eram 60 artigos e 53% da base, por uma duvida
+ *                  de segunda ordem no portal do RH. Sair deles cortou 34% do
+ *                  custo por conversa. Quando o RH perguntar algo dessa area,
+ *                  a Lets se abstem e registra a lacuna — que e informacao.
  */
 const CATEGORIAS = [
   { id: '18966060376347', nome: 'Empresa' },
-  { id: '18932438459547', nome: 'Alunos' },
   { id: '18966087949467', nome: 'LGPD' },
   { id: '18966062537627', nome: 'Quem somos' },
 ] as const;

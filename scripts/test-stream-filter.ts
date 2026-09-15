@@ -16,6 +16,8 @@ const CASOS: Array<{ nome: string; deltas: string[]; visivel: string; ids: strin
   { nome: 'menor-que solto não pode ser retido', deltas: ['Use a tecla <', ' para voltar'], visivel: 'Use a tecla < para voltar', ids: '' },
   { nome: 'marcador no meio do texto', deltas: ['Antes ', '<artigos>KB-7</artigos>', ' depois'], visivel: 'Antes  depois', ids: 'KB-7' },
   { nome: 'marcador aberto que nunca fecha', deltas: ['Oi <artigos>KB-3'], visivel: 'Oi ', ids: '' },
+  { nome: 'tag no singular (Haiku emitiu assim)', deltas: ['<artigo>CLI-AB12</artigo>Olá!'], visivel: 'Olá!', ids: 'CLI-AB12' },
+  { nome: 'singular fatiado byte a byte', deltas: '<artigo>KB-1</artigo>Oi'.split(''), visivel: 'Oi', ids: 'KB-1' },
   { nome: 'dois marcadores (turno com tool use)', deltas: ['<artigos>KB-1</artigos>a<artigos>KB-2</artigos>b'], visivel: 'ab', ids: 'KB-1,KB-2' },
 ];
 

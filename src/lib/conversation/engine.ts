@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { KnowledgeSource } from '../kb/types';
 import { MODELO, montarSystemPrompt } from '../prompt/system-prompt';
-import { TOOLS, type EntradaAbrirCaso, type EntradaRegistrarNaoRespondida } from './tools';
+import { TOOLS, type EntradaAbrirCaso } from './tools';
 import { FiltroDeArtigos } from './stream-filter';
 import { novaConversa, type Conversa, type ConversationStore } from './types';
 
@@ -25,7 +25,11 @@ export interface Turno {
   abriuCaso: boolean;
   numeroCaso: string | null;
   registrouNaoRespondida: boolean;
-  /** true quando quem registrou foi o servidor, e nao o modelo. */
+  /**
+   * Sempre true desde que a tool de registro saiu: hoje so o servidor
+   * registra. Mantido no tipo porque o dashboard ainda distingue a origem dos
+   * registros gravados antes dessa mudanca.
+   */
   deteccaoDoServidor: boolean;
   uso: { entrada: number; escritaDeCache: number; leituraDeCache: number; saida: number };
 }
@@ -37,7 +41,7 @@ export interface Turno {
  * produz mais de um bloco de texto, e o marcador pode cair em qualquer um
  * deles. Ancorar no inicio perdia o registro em todo turno com ferramenta.
  */
-const LINHA_DE_ARTIGOS = /<artigos>([\s\S]*?)<\/artigos>/g;
+const LINHA_DE_ARTIGOS = /<artigos?>([\s\S]*?)<\/artigos?>/g;
 
 /**
  * Rede de seguranca da metrica de perguntas nao respondidas.
@@ -131,6 +135,8 @@ export interface ConfigDoMotor {
   client?: Anthropic;
   /** Alavanca de custo e qualidade. Padrao alto: disciplina de abstencao e o que importa aqui. */
   effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+  /** Sobrepoe o modelo padrao. Existe para comparar modelos na mesma base. */
+  modelo?: string;
 }
 
 export class MotorDeConversa {
@@ -170,7 +176,7 @@ export class MotorDeConversa {
     // Laco de tool use. Para quando o modelo devolve texto sem pedir ferramenta.
     for (let volta = 0; volta < 6; volta++) {
       const resposta = await this.client.messages.create({
-        model: MODELO,
+        model: this.config.modelo ?? MODELO,
         max_tokens: 4096,
         system: await this.systemPrompt(),
         tools: TOOLS,
@@ -247,7 +253,7 @@ export class MotorDeConversa {
 
     for (let volta = 0; volta < 6; volta++) {
       const stream = this.client.messages.stream({
-        model: MODELO,
+        model: this.config.modelo ?? MODELO,
         max_tokens: 4096,
         system: await this.systemPrompt(),
         tools: TOOLS,
@@ -340,26 +346,6 @@ export class MotorDeConversa {
         turno.numeroCaso = numero;
 
         return { type: 'tool_result', tool_use_id: chamada.id, content: `Chamado ${numero} aberto.` };
-      }
-
-      if (chamada.name === 'registrar_nao_respondida') {
-        const { pergunta, motivo } = chamada.input as EntradaRegistrarNaoRespondida;
-
-        // O modelo ja mandou "placeholder" aqui. Em vez de gravar o rascunho
-        // ou descartar o registro, cai para o que a pessoa realmente escreveu:
-        // o sinal e preservado e a lista continua legivel.
-        const texto = perguntaAproveitavel(pergunta) ? pergunta : perguntaDoUsuario;
-
-        await store.registrarNaoRespondida(tenantId, {
-          pergunta: texto,
-          conversationId: conversa.id,
-          registradaEm: new Date().toISOString(),
-          detectadaPeloServidor: false,
-          motivo: motivo === 'fora_de_escopo' ? 'fora_de_escopo' : 'lacuna',
-        });
-        turno.registrouNaoRespondida = true;
-
-        return { type: 'tool_result', tool_use_id: chamada.id, content: 'Registrado.' };
       }
 
       throw new Error(`ferramenta desconhecida: ${chamada.name}`);
