@@ -60,9 +60,7 @@ function ListaDeLacunas({
       {lacunas.map((l) => (
         <li key={l.pergunta + l.ultimaEm} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-4">
           {l.vezes > 1 && (
-            <span className="shrink-0 rounded-full bg-tp-verde px-2 py-0.5 text-[11px] font-semibold text-tp-noite">
-              {l.vezes}×
-            </span>
+            <span className="shrink-0 text-[13px] font-semibold text-tp-verde-escuro">{l.vezes}×</span>
           )}
           <span className="min-w-0 flex-1 text-[13.5px] leading-snug text-tp-noite">{l.pergunta}</span>
           <span className="shrink-0 text-[11px] text-tp-apagado">
@@ -195,14 +193,7 @@ export default async function Metricas({
       </section>
 
       <section className="mt-10">
-        <div className="flex flex-wrap items-baseline gap-x-3">
-          <h2 className="text-[15px] font-semibold text-tp-noite">Perguntas que a base não cobriu</h2>
-          {agrupar && lacunas.length > 0 && (
-            <span className="rounded-full bg-tp-verde/15 px-2.5 py-0.5 text-[10.5px] font-medium text-tp-verde-escuro">
-              agrupadas por sentido
-            </span>
-          )}
-        </div>
+        <h2 className="text-[15px] font-semibold text-tp-noite">Perguntas que a base não cobriu</h2>
 
         {lacunas.length === 0 ? (
           <Vazio texto="Nenhuma lacuna registrada ainda." />
@@ -212,14 +203,7 @@ export default async function Metricas({
       </section>
 
       <section className="mt-10">
-        <div className="flex flex-wrap items-baseline gap-x-3">
-          <h2 className="text-[15px] font-semibold text-tp-noite">Fora do escopo</h2>
-          {agrupar && foraDeEscopo.length > 0 && (
-            <span className="rounded-full bg-tp-verde/15 px-2.5 py-0.5 text-[10.5px] font-medium text-tp-verde-escuro">
-              agrupadas por sentido
-            </span>
-          )}
-        </div>
+        <h2 className="text-[15px] font-semibold text-tp-noite">Fora do escopo</h2>
 
         {foraDeEscopo.length === 0 ? (
           <Vazio texto="Ninguém perguntou nada fora da TotalPass ainda." />

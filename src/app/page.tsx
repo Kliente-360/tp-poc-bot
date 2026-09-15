@@ -37,8 +37,8 @@ export default function Portal() {
             <article key={c.titulo} className="rounded-xl border border-tp-borda bg-white p-5">
               <h3 className="text-[14px] font-semibold text-tp-noite">{c.titulo}</h3>
               <p className="mt-1.5 text-[13px] leading-relaxed text-tp-apagado">{c.texto}</p>
-              <span className="mt-3 inline-block rounded-full bg-tp-nevoa px-3 py-1 text-[11px] font-medium text-tp-grafite">
-                Acessar
+              <span className="mt-3 inline-block text-[12px] font-medium text-tp-verde-escuro">
+                Acessar →
               </span>
             </article>
           ))}
