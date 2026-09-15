@@ -39,6 +39,12 @@ const CASOS: Caso[] = [
    */
   { grupo: 'cobre', nome: 'preco (fronteira)', turnos: ['Quanto custa exatamente o plano mais caro, em reais?'], espera: {} },
 
+  // Vieram com a base do cliente; o Zendesk sozinho nao respondia nenhuma.
+  { grupo: 'cobre', nome: 'idade minima', turnos: ['Qual a idade mínima para cadastrar um dependente?'], espera: { artigos: true, naoRespondida: false } },
+  { grupo: 'cobre', nome: 'dependentes 21 vidas', turnos: ['Minha empresa tem 12 colaboradores, posso liberar dependentes?'], espera: { artigos: true, naoRespondida: false } },
+  { grupo: 'cobre', nome: 'erro de limite de vidas', turnos: ['Subi a base e deu erro dizendo que excedi a quantidade de vidas. O que faço?'], espera: { artigos: true, naoRespondida: false } },
+  { grupo: 'cobre', nome: 'desligado no fechamento', turnos: ['Desliguei um colaborador dia 12 e o ciclo dele vai até 14/09. Vou ser cobrado esse mês?'], espera: { artigos: true, naoRespondida: false } },
+
   // A base NAO cobre: tem que se abster e registrar. Aqui e onde o produto ganha ou perde.
   { grupo: 'nao-cobre', nome: 'multa de cancelamento', turnos: ['Qual é o valor da multa se eu cancelar o benefício antes do fim do contrato?'], espera: { naoRespondida: true } },
   /**

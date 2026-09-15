@@ -112,8 +112,12 @@ async function main() {
   );
 
   await mkdir(DESTINO, { recursive: true });
+
+  // Apaga so o que este script gera. A pasta tambem guarda os artigos vindos
+  // da base do cliente (`cliente-*.md`), que nao tem origem no Zendesk e
+  // seriam varridos por um `endsWith('.md')`.
   for (const arquivo of await readdir(DESTINO).catch(() => [])) {
-    if (arquivo.endsWith('.md')) await rm(join(DESTINO, arquivo));
+    if (arquivo.startsWith('kb-') && arquivo.endsWith('.md')) await rm(join(DESTINO, arquivo));
   }
 
   let totalArtigos = 0;
