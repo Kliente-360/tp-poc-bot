@@ -41,6 +41,13 @@ export interface PerguntaNaoRespondida {
   registradaEm: string;
   /** true quando veio da deteccao do servidor, e nao da tool. */
   detectadaPeloServidor: boolean;
+  /**
+   * `lacuna`: assunto da TotalPass que a base nao cobre — vira roadmap de conteudo.
+   * `fora_de_escopo`: assunto que nao e da TotalPass — vira leitura de expectativa.
+   *
+   * Ausente nos registros gravados antes desta distincao existir; trate como `lacuna`.
+   */
+  motivo?: 'lacuna' | 'fora_de_escopo';
 }
 
 export interface Metricas {

@@ -50,6 +50,30 @@ function Kpi({
   );
 }
 
+function ListaDeLacunas({
+  lacunas,
+}: {
+  lacunas: Array<{ pergunta: string; vezes: number; ultimaEm: string }>;
+}) {
+  return (
+    <ul className="mt-3 divide-y divide-tp-borda overflow-hidden rounded-xl border border-tp-borda bg-white">
+      {lacunas.map((l) => (
+        <li key={l.pergunta + l.ultimaEm} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-4">
+          {l.vezes > 1 && (
+            <span className="shrink-0 rounded-full bg-tp-verde px-2 py-0.5 text-[11px] font-semibold text-tp-noite">
+              {l.vezes}×
+            </span>
+          )}
+          <span className="min-w-0 flex-1 text-[13.5px] leading-snug text-tp-noite">{l.pergunta}</span>
+          <span className="shrink-0 text-[11px] text-tp-apagado">
+            {dataHora.format(new Date(l.ultimaEm))}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function Vazio({ texto }: { texto: string }) {
   return (
     <div className="mt-3 rounded-xl border border-dashed border-tp-borda bg-white p-8 text-center">
@@ -75,8 +99,16 @@ export default async function Metricas({
   const titulos = new Map(artigos.map((a) => [a.id, a]));
   const ranking = metricas.artigosMaisUsados.slice(0, TOP_ARTIGOS);
   const maior = ranking[0]?.consultas ?? 1;
-  const porTexto = agruparLacunas(naoRespondidas);
-  const lacunas = agrupar ? await agruparPorSentido(porTexto) : porTexto;
+  // `motivo` ausente nos registros anteriores a esta distincao: contam como lacuna.
+  const daLacuna = naoRespondidas.filter((r) => r.motivo !== 'fora_de_escopo');
+  const doForaDeEscopo = naoRespondidas.filter((r) => r.motivo === 'fora_de_escopo');
+
+  const [lacunas, foraDeEscopo] = agrupar
+    ? await Promise.all([
+        agruparPorSentido(agruparLacunas(daLacuna)),
+        agruparPorSentido(agruparLacunas(doForaDeEscopo)),
+      ])
+    : [agruparLacunas(daLacuna), agruparLacunas(doForaDeEscopo)];
 
   return (
     <LayoutPortal ativo="Métricas MVP">
@@ -90,9 +122,13 @@ export default async function Metricas({
         <Link
           href={{ pathname: '/metricas', query: { agrupar: '1', t: Date.now() } }}
           prefetch={false}
-          className="flex shrink-0 items-center gap-2 rounded-full bg-tp-noite px-4 py-2 text-[12.5px] font-medium text-white transition-colors hover:bg-tp-verde-escuro"
+          // Sem rotulo visivel: o titulo e o aria-label carregam o significado
+          // para quem passa o mouse e para quem usa leitor de tela.
+          title="Atualizar e agrupar por sentido"
+          aria-label="Atualizar e agrupar por sentido"
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-tp-noite text-white transition-colors hover:bg-tp-verde-escuro"
         >
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true">
             <path
               d="M20 11A8 8 0 1 0 18 16.5M20 5v6h-6"
               stroke="currentColor"
@@ -101,7 +137,6 @@ export default async function Metricas({
               strokeLinejoin="round"
             />
           </svg>
-          Atualizar e agrupar
         </Link>
       </div>
 
@@ -117,7 +152,7 @@ export default async function Metricas({
         <Kpi rotulo="Taxa de deflexão" valor={`${Math.round(metricas.taxaDeDeflexao * 100)}%`} destaque />
         <Kpi rotulo="Conversas" valor={String(metricas.totalDeConversas)} />
         <Kpi rotulo="Chamados abertos" valor={String(metricas.conversasComChamado)} />
-        <Kpi rotulo="Perguntas sem resposta" valor={String(naoRespondidas.length)} />
+        <Kpi rotulo="Lacunas de conteúdo" valor={String(daLacuna.length)} />
       </section>
 
       <section className="mt-10">
@@ -172,23 +207,24 @@ export default async function Metricas({
         {lacunas.length === 0 ? (
           <Vazio texto="Nenhuma lacuna registrada ainda." />
         ) : (
-          <ul className="mt-3 divide-y divide-tp-borda overflow-hidden rounded-xl border border-tp-borda bg-white">
-            {lacunas.map((l) => (
-              <li key={l.pergunta + l.ultimaEm} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-4">
-                {l.vezes > 1 && (
-                  <span className="shrink-0 rounded-full bg-tp-verde px-2 py-0.5 text-[11px] font-semibold text-tp-noite">
-                    {l.vezes}×
-                  </span>
-                )}
-                <span className="min-w-0 flex-1 text-[13.5px] leading-snug text-tp-noite">
-                  {l.pergunta}
-                </span>
-                <span className="shrink-0 text-[11px] text-tp-apagado">
-                  {dataHora.format(new Date(l.ultimaEm))}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <ListaDeLacunas lacunas={lacunas} />
+        )}
+      </section>
+
+      <section className="mt-10">
+        <div className="flex flex-wrap items-baseline gap-x-3">
+          <h2 className="text-[15px] font-semibold text-tp-noite">Fora do escopo</h2>
+          {agrupar && foraDeEscopo.length > 0 && (
+            <span className="rounded-full bg-tp-verde/15 px-2.5 py-0.5 text-[10.5px] font-medium text-tp-verde-escuro">
+              agrupadas por sentido
+            </span>
+          )}
+        </div>
+
+        {foraDeEscopo.length === 0 ? (
+          <Vazio texto="Ninguém perguntou nada fora da TotalPass ainda." />
+        ) : (
+          <ListaDeLacunas lacunas={foraDeEscopo} />
         )}
       </section>
     </LayoutPortal>

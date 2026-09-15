@@ -57,19 +57,27 @@ export async function GET(request: Request): Promise<Response> {
         categoria: titulos.get(a.id)?.categoria ?? null,
         consultas: a.consultas,
       })),
-      naoRespondidas: {
-        registros: naoRespondidas.length,
-        distintas: agruparLacunas(naoRespondidas).length,
-        // Agrupadas por forma normalizada, da mais repetida para a menos.
-        // Isso junta a mesma frase escrita de formas diferentes, nao a mesma
-        // duvida escrita com outras palavras — ver src/lib/conversation/agrupar.ts.
-        perguntas: agruparLacunas(naoRespondidas).map((l) => ({
-          pergunta: l.pergunta,
-          vezes: l.vezes,
-          ultimaEm: l.ultimaEm,
-          conversas: l.conversas,
-        })),
-      },
+      naoRespondidas: (() => {
+        // `motivo` ausente nos registros anteriores a esta distincao: sao lacuna.
+        const lacuna = naoRespondidas.filter((r) => r.motivo !== 'fora_de_escopo');
+        const fora = naoRespondidas.filter((r) => r.motivo === 'fora_de_escopo');
+
+        const formatar = (registros: typeof naoRespondidas) =>
+          agruparLacunas(registros).map((l) => ({
+            pergunta: l.pergunta,
+            vezes: l.vezes,
+            ultimaEm: l.ultimaEm,
+            conversas: l.conversas,
+          }));
+
+        return {
+          registros: naoRespondidas.length,
+          // O que falta escrever na base.
+          lacunasDeConteudo: formatar(lacuna),
+          // O que as pessoas esperam que a Lets faca e nao e o trabalho dela.
+          foraDeEscopo: formatar(fora),
+        };
+      })(),
     });
   } catch (erro) {
     console.error('[metricas] falhou', erro);

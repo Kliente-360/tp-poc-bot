@@ -52,6 +52,14 @@ const LINHA_DE_ARTIGOS = /<artigos>([\s\S]*?)<\/artigos>/g;
  * Um falso negativo custa uma linha de metrica; um falso positivo sujaria o
  * roadmap de conteudo do cliente com pergunta que a base ja responde.
  */
+/** Recusa de assunto que nao e da TotalPass. Vira registro, com outro motivo. */
+const SINAIS_DE_FORA_DE_ESCOPO = [
+  /s[óo] (falo|consigo falar|posso falar)\b[^.!?]{0,30}\bTotalPass/i,
+  /n[ãa]o (é|e)\b[^.!?]{0,20}\b(minha praia|meu forte|comigo)/i,
+  /(foge|fora)\s+d[oa]\s+(meu escopo|que eu falo)/i,
+  /meu conhecimento (é|e) s[óo]\b[^.!?]{0,25}\bTotalPass/i,
+];
+
 const SINAIS_DE_ABSTENCAO = [
   /n[ãa]o (tenho|encontrei|achei|localizei)\b[^.!?]{0,40}\b(informa[çc][ãa]o|dado|detalhe|resposta)/i,
   /n[ãa]o (est[áa]|consta|tenho)\b[^.!?]{0,30}\b(na (minha )?base|no meu material|aqui comigo)/i,
@@ -272,12 +280,13 @@ export class MotorDeConversa {
       }
 
       if (chamada.name === 'registrar_nao_respondida') {
-        const { pergunta } = chamada.input as EntradaRegistrarNaoRespondida;
+        const { pergunta, motivo } = chamada.input as EntradaRegistrarNaoRespondida;
         await store.registrarNaoRespondida(tenantId, {
           pergunta,
           conversationId: conversa.id,
           registradaEm: new Date().toISOString(),
           detectadaPeloServidor: false,
+          motivo: motivo === 'fora_de_escopo' ? 'fora_de_escopo' : 'lacuna',
         });
         turno.registrouNaoRespondida = true;
 
@@ -314,17 +323,21 @@ export class MotorDeConversa {
 
   private async redeDeSeguranca(turno: Turno, conversa: Conversa, pergunta: string): Promise<void> {
     if (turno.registrouNaoRespondida) return;
+    // Resposta com artigo por tras nunca e recusa, por mais que a frase pareca.
+    if (turno.artigosUsados.length > 0) return;
 
-    const pareceAbstencao = SINAIS_DE_ABSTENCAO.some((s) => s.test(turno.resposta));
-    // Sem artigo por tras e com linguagem de abstencao: o modelo se absteve e
-    // esqueceu de chamar a tool.
-    if (!pareceAbstencao || turno.artigosUsados.length > 0) return;
+    const foraDeEscopo = SINAIS_DE_FORA_DE_ESCOPO.some((s) => s.test(turno.resposta));
+    const abstencao = SINAIS_DE_ABSTENCAO.some((s) => s.test(turno.resposta));
+    if (!foraDeEscopo && !abstencao) return;
 
     await this.config.store.registrarNaoRespondida(this.config.tenantId, {
       pergunta,
       conversationId: conversa.id,
       registradaEm: new Date().toISOString(),
       detectadaPeloServidor: true,
+      // Na duvida entre os dois, `lacuna`: errar para o lado do roadmap de
+      // conteudo custa uma linha a revisar; errar para o outro esconde a falta.
+      motivo: foraDeEscopo && !abstencao ? 'fora_de_escopo' : 'lacuna',
     });
     turno.registrouNaoRespondida = true;
     turno.deteccaoDoServidor = true;

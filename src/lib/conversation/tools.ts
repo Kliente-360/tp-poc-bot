@@ -43,8 +43,9 @@ export const TOOLS: Anthropic.Tool[] = [
   {
     name: 'registrar_nao_respondida',
     description:
-      'Registra uma pergunta que a base de conhecimento não cobriu. Chame sempre que se abster ' +
-      'por falta de informação, mesmo que a pessoa recuse abrir chamado.',
+      'Registra toda pergunta que você não respondeu, seja por falta de informação na base ou ' +
+      'por ser assunto fora da TotalPass. Chame sempre que recusar ou se abster, mesmo que a ' +
+      'pessoa não peça nada depois.',
     input_schema: {
       type: 'object',
       properties: {
@@ -52,8 +53,17 @@ export const TOOLS: Anthropic.Tool[] = [
           type: 'string',
           description: 'A pergunta original, nas palavras da pessoa. Não reformule.',
         },
+        motivo: {
+          type: 'string',
+          enum: ['lacuna', 'fora_de_escopo'],
+          description:
+            'Use "lacuna" quando o assunto é da TotalPass mas a base não cobre — inclui pergunta ' +
+            'sobre concorrente, comparação ou migração, que é assunto de quem usa o benefício. ' +
+            'Use "fora_de_escopo" só quando o assunto não tem relação nenhuma com a TotalPass, ' +
+            'como receita, política ou conselho pessoal.',
+        },
       },
-      required: ['pergunta'],
+      required: ['pergunta', 'motivo'],
       additionalProperties: false,
     },
     strict: true,
@@ -66,8 +76,11 @@ export interface EntradaAbrirCaso {
   email: string;
 }
 
+export type MotivoDeNaoResposta = 'lacuna' | 'fora_de_escopo';
+
 export interface EntradaRegistrarNaoRespondida {
   pergunta: string;
+  motivo: MotivoDeNaoResposta;
 }
 
 /** Validacao de e-mail deliberadamente frouxa: barra erro grosseiro, nao valida existencia. */
