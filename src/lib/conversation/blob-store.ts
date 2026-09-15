@@ -1,5 +1,6 @@
 import { getStore, type Store } from '@netlify/blobs';
 import {
+  apurar,
   chaveDaConversa,
   chaveDasNaoRespondidas,
   type Conversa,
@@ -94,13 +95,6 @@ export class BlobStore implements ConversationStore {
       blobs.map((b) => this.conversas.get(b.key, { type: 'json' }) as Promise<Conversa | null>),
     );
 
-    const validas = conversas.filter((c): c is Conversa => c !== null);
-    const comChamado = validas.filter((c) => c.abriuCaso).length;
-
-    return {
-      totalDeConversas: validas.length,
-      conversasComChamado: comChamado,
-      taxaDeDeflexao: validas.length === 0 ? 0 : (validas.length - comChamado) / validas.length,
-    };
+    return apurar(conversas.filter((c): c is Conversa => c !== null));
   }
 }

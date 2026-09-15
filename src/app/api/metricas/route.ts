@@ -1,4 +1,6 @@
+import { agruparLacunas } from '@/lib/conversation/agrupar';
 import { criarStore } from '@/lib/conversation/criar-store';
+import { BundledSource } from '@/lib/kb/bundled-source';
 
 export const runtime = 'edge';
 
@@ -33,10 +35,13 @@ export async function GET(request: Request): Promise<Response> {
   const dia = url.searchParams.get('dia') ?? undefined;
 
   try {
-    const [metricas, naoRespondidas] = await Promise.all([
+    const [metricas, naoRespondidas, artigos] = await Promise.all([
       store.calcularMetricas(tenantId),
       store.listarNaoRespondidas(tenantId, dia),
+      new BundledSource().listarArtigos(),
     ]);
+
+    const titulos = new Map(artigos.map((a) => [a.id, a]));
 
     return Response.json({
       tenant: tenantId,
@@ -46,18 +51,24 @@ export async function GET(request: Request): Promise<Response> {
         semChamado: metricas.totalDeConversas - metricas.conversasComChamado,
         taxa: Number(metricas.taxaDeDeflexao.toFixed(4)),
       },
+      artigosMaisConsultados: metricas.artigosMaisUsados.map((a) => ({
+        id: a.id,
+        titulo: titulos.get(a.id)?.titulo ?? null,
+        categoria: titulos.get(a.id)?.categoria ?? null,
+        consultas: a.consultas,
+      })),
       naoRespondidas: {
-        total: naoRespondidas.length,
-        // Mais recentes primeiro: esta lista e lida como fila de trabalho de
-        // conteudo, e o que chegou hoje importa mais que o do mes passado.
-        perguntas: naoRespondidas
-          .sort((a, b) => b.registradaEm.localeCompare(a.registradaEm))
-          .map((r) => ({
-            pergunta: r.pergunta,
-            quando: r.registradaEm,
-            conversa: r.conversationId,
-            origem: r.detectadaPeloServidor ? 'detecção do servidor' : 'ferramenta',
-          })),
+        registros: naoRespondidas.length,
+        distintas: agruparLacunas(naoRespondidas).length,
+        // Agrupadas por forma normalizada, da mais repetida para a menos.
+        // Isso junta a mesma frase escrita de formas diferentes, nao a mesma
+        // duvida escrita com outras palavras — ver src/lib/conversation/agrupar.ts.
+        perguntas: agruparLacunas(naoRespondidas).map((l) => ({
+          pergunta: l.pergunta,
+          vezes: l.vezes,
+          ultimaEm: l.ultimaEm,
+          conversas: l.conversas,
+        })),
       },
     });
   } catch (erro) {

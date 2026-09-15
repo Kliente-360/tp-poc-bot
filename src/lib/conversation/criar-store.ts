@@ -11,10 +11,19 @@ import type { ConversationStore } from './types';
  * produção a ausência dos Blobs nao e detalhe: e perda silenciosa de metrica,
  * entao o aviso e ruidoso.
  */
-export function criarStore(): ConversationStore {
-  const noNetlify = Boolean(process.env.NETLIFY || process.env.NETLIFY_BLOBS_CONTEXT);
+/**
+ * Ha persistencia de verdade neste ambiente?
+ *
+ * O dashboard mostra isso na tela. Um aviso so no console do servidor nao
+ * serve: o modo de falha e a metrica zerar em silencio, e quem olha o
+ * dashboard nao olha o log.
+ */
+export function persistenciaReal(): boolean {
+  return Boolean(process.env.NETLIFY || process.env.NETLIFY_BLOBS_CONTEXT);
+}
 
-  if (!noNetlify) {
+export function criarStore(): ConversationStore {
+  if (!persistenciaReal()) {
     console.warn(
       '[store] fora do runtime do Netlify — usando memória. ' +
         'As métricas não sobrevivem ao reinício. Para testar a persistência de verdade: netlify dev',

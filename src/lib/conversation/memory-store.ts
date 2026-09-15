@@ -1,4 +1,5 @@
 import {
+  apurar,
   chaveDaConversa,
   chaveDasNaoRespondidas,
   type Conversa,
@@ -48,13 +49,6 @@ export class InMemoryStore implements ConversationStore {
   }
 
   async calcularMetricas(tenantId: string): Promise<Metricas> {
-    const daOrg = [...this.conversas.values()].filter((c) => c.tenantId === tenantId);
-    const comChamado = daOrg.filter((c) => c.abriuCaso).length;
-
-    return {
-      totalDeConversas: daOrg.length,
-      conversasComChamado: comChamado,
-      taxaDeDeflexao: daOrg.length === 0 ? 0 : (daOrg.length - comChamado) / daOrg.length,
-    };
+    return apurar([...this.conversas.values()].filter((c) => c.tenantId === tenantId));
   }
 }

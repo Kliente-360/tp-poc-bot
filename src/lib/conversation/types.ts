@@ -48,6 +48,34 @@ export interface Metricas {
   conversasComChamado: number;
   /** Conversas encerradas sem abertura de chamado, sobre o total. */
   taxaDeDeflexao: number;
+  /**
+   * Quantas vezes cada artigo sustentou uma resposta, da mais para a menos.
+   *
+   * Conta por resposta, nao por conversa: o artigo consultado em cinco turnos
+   * de uma mesma conversa foi util cinco vezes.
+   */
+  artigosMaisUsados: Array<{ id: string; consultas: number }>;
+}
+
+/** Percorre as conversas e conta uso de artigo. Compartilhado pelas duas stores. */
+export function apurar(conversas: Conversa[]): Metricas {
+  const comChamado = conversas.filter((c) => c.abriuCaso).length;
+  const contagem = new Map<string, number>();
+
+  for (const conversa of conversas) {
+    for (const daResposta of conversa.artigosUsados) {
+      for (const id of daResposta) contagem.set(id, (contagem.get(id) ?? 0) + 1);
+    }
+  }
+
+  return {
+    totalDeConversas: conversas.length,
+    conversasComChamado: comChamado,
+    taxaDeDeflexao: conversas.length === 0 ? 0 : (conversas.length - comChamado) / conversas.length,
+    artigosMaisUsados: [...contagem.entries()]
+      .map(([id, consultas]) => ({ id, consultas }))
+      .sort((a, b) => b.consultas - a.consultas || a.id.localeCompare(b.id)),
+  };
 }
 
 export interface ConversationStore {
