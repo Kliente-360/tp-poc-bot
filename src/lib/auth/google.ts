@@ -76,6 +76,25 @@ export function urlDeAutorizacao(
  * O mesmo NAO valeria se o token chegasse pelo navegador — ai a assinatura
  * seria a unica garantia.
  */
+/**
+ * Le o payload do JWT.
+ *
+ * Passa por TextDecoder em vez de usar a saida do `atob` direto: `atob` devolve
+ * bytes, e interpreta-los como texto trata cada byte como um caractere. Nome
+ * com acento vira lixo — "Ação" sai como "AÃ§Ã£o".
+ */
+function lerPayload(idToken: string): {
+  email?: string;
+  email_verified?: boolean;
+  name?: string;
+  picture?: string;
+} {
+  const base = idToken.split('.')[1]!.replace(/-/g, '+').replace(/_/g, '/');
+  const binario = atob(base.padEnd(Math.ceil(base.length / 4) * 4, '='));
+  const bytes = Uint8Array.from(binario, (c) => c.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes)) as ReturnType<typeof lerPayload>;
+}
+
 export async function trocarCodigo(
   config: ConfigGoogle,
   codigo: string,
@@ -100,9 +119,7 @@ export async function trocarCodigo(
     throw new Error(`Google recusou a troca do código: ${dados.error_description ?? dados.error ?? resposta.status}`);
   }
 
-  const payload = JSON.parse(
-    atob(dados.id_token.split('.')[1]!.replace(/-/g, '+').replace(/_/g, '/')),
-  ) as { email?: string; email_verified?: boolean; name?: string; picture?: string };
+  const payload = lerPayload(dados.id_token);
 
   if (!payload.email) throw new Error('Google não devolveu e-mail no token.');
 

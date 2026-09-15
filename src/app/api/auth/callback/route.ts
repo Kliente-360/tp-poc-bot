@@ -22,10 +22,18 @@ function lerCookie(request: Request, nome: string): string | undefined {
     ?.slice(nome.length + 1);
 }
 
+/**
+ * Volta para o login com o motivo.
+ *
+ * `new Response` e nao `Response.redirect`: a resposta que o helper devolve tem
+ * headers imutaveis, e o Next tenta acrescentar os dele depois — o resultado e
+ * `TypeError: immutable` e um 500 em todos os caminhos desta rota, inclusive
+ * nos que nem chegam a falar com o Google.
+ */
 function recusar(request: Request, motivo: string): Response {
   const url = new URL('/login', new URL(request.url).origin);
   url.searchParams.set('erro', motivo);
-  return Response.redirect(url.toString(), 302);
+  return new Response(null, { status: 302, headers: { Location: url.toString() } });
 }
 
 export async function GET(request: Request): Promise<Response> {
