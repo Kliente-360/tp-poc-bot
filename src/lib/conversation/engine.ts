@@ -53,13 +53,64 @@ const LINHA_DE_ARTIGOS = /<artigos>([\s\S]*?)<\/artigos>/g;
  * Um falso negativo custa uma linha de metrica; um falso positivo sujaria o
  * roadmap de conteudo do cliente com pergunta que a base ja responde.
  */
-/** Recusa de assunto que nao e da TotalPass. Vira registro, com outro motivo. */
+/**
+ * Recusa de assunto que nao e da TotalPass. Vira registro, com outro motivo.
+ *
+ * Generosa de proposito: a guarda de `artigosUsados` vazio ja elimina quase
+ * todo falso positivo, e o custo dos dois erros e assimetrico. Um falso
+ * positivo e uma linha a revisar no dashboard; um falso negativo e uma
+ * pergunta que o cliente nunca fica sabendo que fizeram.
+ */
 const SINAIS_DE_FORA_DE_ESCOPO = [
-  /s[óo] (falo|consigo falar|posso falar)\b[^.!?]{0,30}\bTotalPass/i,
-  /n[ãa]o (é|e)\b[^.!?]{0,20}\b(minha praia|meu forte|comigo)/i,
-  /(foge|fora)\s+d[oa]\s+(meu escopo|que eu falo)/i,
-  /meu conhecimento (é|e) s[óo]\b[^.!?]{0,25}\bTotalPass/i,
+  // "só falo de TotalPass", "aqui é só sobre TotalPass", "apenas assuntos da TotalPass"
+  /(?<!\p{L})(s[óo]|apenas|somente)(?!\p{L})[^.!?]{0,60}TotalPass/iu,
+  // "não é minha praia", "não é bem o meu forte", "não é comigo"
+  /n[ãa]o\s+[ée]\s[^.!?]{0,25}(minha praia|meu forte|comigo|a minha [áa]rea)/iu,
+  // "foge do meu escopo", "fora do que eu falo", "além do meu alcance"
+  /(foge|fora|al[ée]m)\s+d[oa]\s+(meu|que eu)(?!\p{L})/iu,
+  // "meu conhecimento é só sobre a TotalPass"
+  /meu (conhecimento|assunto|escopo|papel)[^.!?]{0,40}TotalPass/iu,
+  // "não trabalho com esse tipo de", "não trato desse assunto"
+  /n[ãa]o\s+(trabalho|trato|lido)\s+(com|de|desse)(?!\p{L})/iu,
+  // "não consigo te ajudar com isso, mas posso falar da TotalPass"
+  /n[ãa]o\s+(consigo|posso)\s+(te\s+)?ajudar[^.!?]{0,40}(mas|por[ée]m)[^.!?]{0,40}TotalPass/iu,
+  // "isso não tem a ver com a TotalPass"
+  /n[ãa]o\s+tem[^.!?]{0,20}(a ver|rela[çc][ãa]o)[^.!?]{0,30}TotalPass/iu,
 ];
+
+const SINAIS_DE_ABSTENCAO = [
+  /n[ãa]o\s+(tenho|encontrei|achei|localizei)[^.!?]{0,40}(informa[çc][ãa]o|informa[çc][õo]es|dado|detalhe|resposta|valor)/iu,
+  /n[ãa]o\s+(est[áa]|consta|tenho)[^.!?]{0,30}(na (minha )?base|no meu material|aqui comigo)/iu,
+  /n[ãa]o\s+(consigo|posso)\s+(te\s+)?(responder|informar|confirmar|dizer)(?!\p{L})/iu,
+  /n[ãa]o\s+sei\s+(te\s+)?(dizer|informar|responder)(?!\p{L})/iu,
+  /(isso|essa|esse)(?!\p{L})[^.!?]{0,30}n[ãa]o\s+(tenho|sei|est[áa])(?!\p{L})/iu,
+  /(foge|fora)\s+d[oa]\s+que\s+(eu\s+)?tenho/iu,
+];
+
+/**
+ * Classifica uma resposta em que a Lets nao entregou informacao.
+ *
+ * Usada como rede de seguranca: o caminho principal e o modelo chamar a tool.
+ * Depender so dele significa perder todo turno em que ele esquecer, e o que
+ * some da lista some sem erro nenhum aparecer.
+ *
+ * Os padroes evitam `\b` junto de letra acentuada. Em JavaScript, `\b` so
+ * conhece caracteres ASCII: depois do "é" de "não é minha praia" nao existe
+ * fronteira de palavra, e o padrao nunca casa. Foi exatamente assim que a
+ * recusa mais comum da Lets passava batida.
+ *
+ * Devolve null quando a resposta nao parece recusa — saudacao, pedido de
+ * e-mail, confirmacao, conversa de apoio.
+ */
+export function classificarRecusa(resposta: string): 'lacuna' | 'fora_de_escopo' | null {
+  const foraDeEscopo = SINAIS_DE_FORA_DE_ESCOPO.some((s) => s.test(resposta));
+  const abstencao = SINAIS_DE_ABSTENCAO.some((s) => s.test(resposta));
+
+  if (!foraDeEscopo && !abstencao) return null;
+  // Na duvida entre os dois, `lacuna`: errar para o lado do roadmap de
+  // conteudo custa uma linha a revisar; errar para o outro esconde a falta.
+  return foraDeEscopo && !abstencao ? 'fora_de_escopo' : 'lacuna';
+}
 
 /**
  * Valores de rascunho que o modelo as vezes manda quando erra a chamada.
@@ -71,15 +122,6 @@ function perguntaAproveitavel(texto: string): boolean {
   const limpo = texto.trim();
   return limpo.length >= 8 && !RASCUNHOS.test(limpo);
 }
-
-const SINAIS_DE_ABSTENCAO = [
-  /n[ãa]o (tenho|encontrei|achei|localizei)\b[^.!?]{0,40}\b(informa[çc][ãa]o|dado|detalhe|resposta)/i,
-  /n[ãa]o (est[áa]|consta|tenho)\b[^.!?]{0,30}\b(na (minha )?base|no meu material|aqui comigo)/i,
-  /n[ãa]o (consigo|posso)\s+(te\s+)?(responder|informar|confirmar|dizer)/i,
-  /n[ãa]o sei\s+(te\s+)?(dizer|informar|responder)/i,
-  /(isso|essa|esse)\b[^.!?]{0,25}\bn[ãa]o (tenho|sei|est[áa])/i,
-  /(foge|fora)\s+d[oa]\s+que\s+(eu\s+)?tenho/i,
-];
 
 export interface ConfigDoMotor {
   tenantId: string;
@@ -353,18 +395,15 @@ export class MotorDeConversa {
     // Resposta com artigo por tras nunca e recusa, por mais que a frase pareca.
     if (turno.artigosUsados.length > 0) return;
 
-    const foraDeEscopo = SINAIS_DE_FORA_DE_ESCOPO.some((s) => s.test(turno.resposta));
-    const abstencao = SINAIS_DE_ABSTENCAO.some((s) => s.test(turno.resposta));
-    if (!foraDeEscopo && !abstencao) return;
+    const motivo = classificarRecusa(turno.resposta);
+    if (!motivo) return;
 
     await this.config.store.registrarNaoRespondida(this.config.tenantId, {
       pergunta,
       conversationId: conversa.id,
       registradaEm: new Date().toISOString(),
       detectadaPeloServidor: true,
-      // Na duvida entre os dois, `lacuna`: errar para o lado do roadmap de
-      // conteudo custa uma linha a revisar; errar para o outro esconde a falta.
-      motivo: foraDeEscopo && !abstencao ? 'fora_de_escopo' : 'lacuna',
+      motivo,
     });
     turno.registrouNaoRespondida = true;
     turno.deteccaoDoServidor = true;
