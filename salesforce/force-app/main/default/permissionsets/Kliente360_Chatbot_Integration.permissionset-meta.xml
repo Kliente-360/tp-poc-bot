@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Kliente360 Chatbot Integration</label>
+    <description>Permissoes minimas para o chatbot (Lets) abrir chamado. Atribuir ao Run As User do Connected App.</description>
+    <hasActivationRequired>false</hasActivationRequired>
+    <objectPermissions>
+        <object>Case</object>
+        <allowCreate>true</allowCreate>
+        <allowRead>true</allowRead>
+        <allowEdit>true</allowEdit>
+        <allowDelete>false</allowDelete>
+        <viewAllRecords>false</viewAllRecords>
+        <modifyAllRecords>false</modifyAllRecords>
+    </objectPermissions>
+    <fieldPermissions>
+        <field>Case.Conversation_Id__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <userPermissions>
+        <name>ApiEnabled</name>
+        <enabled>true</enabled>
+    </userPermissions>
+</PermissionSet>
