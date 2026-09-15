@@ -1,0 +1,28 @@
+{
+  "name": "tp-poc-bot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Assistente de atendimento (Lets) - POC TotalPass / Kliente 360",
+  "type": "module",
+  "scripts": {
+    "sf:smoke": "tsx --env-file=.env.local scripts/sf-smoke.ts",
+    "kb:fetch": "tsx scripts/fetch-kb.ts",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/turndown": "^5.0.6",
+    "tsx": "^4.19.2",
+    "turndown": "^7.2.4",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "next": "^16.3.5",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  }
+}

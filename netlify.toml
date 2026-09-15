@@ -1,0 +1,11 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# O plugin do Next e detectado automaticamente pelo Netlify, mas deixamos
+# explicito para que o build nao dependa de deteccao.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
