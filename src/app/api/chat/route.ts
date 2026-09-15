@@ -1,6 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import { MotorDeConversa } from '@/lib/conversation/engine';
-import { InMemoryStore } from '@/lib/conversation/memory-store';
+import { criarStore } from '@/lib/conversation/criar-store';
 import { BundledSource } from '@/lib/kb/bundled-source';
 import { criarAbridorSalesforce } from '@/lib/salesforce/case-adapter';
 
@@ -41,9 +41,7 @@ function obterMotor(): MotorDeConversa {
   motor = new MotorDeConversa({
     tenantId: process.env.TENANT_ID ?? 'totalpass',
     knowledge: new BundledSource(),
-    // Etapa 6 troca por BlobStore. Em edge este Map nao sobrevive entre
-    // instancias — as metricas so passam a valer com a persistencia real.
-    store: new InMemoryStore(),
+    store: criarStore(),
     casos: criarAbridorSalesforce({
       loginUrl: exigir('SF_LOGIN_URL'),
       clientId: exigir('SF_CLIENT_ID'),
