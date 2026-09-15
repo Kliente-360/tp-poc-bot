@@ -18,9 +18,12 @@ export function segredoDeSessao(): string {
 /**
  * A URL de callback precisa bater exatamente com a registrada no Google.
  *
- * Derivada da requisicao para funcionar em localhost e em producao sem
- * variavel diferente em cada ambiente. AUTH_BASE_URL existe como escape para
- * o caso de um proxy reescrever o host.
+ * Derivada da requisicao em desenvolvimento, para funcionar em localhost sem
+ * configuracao. Em producao no Netlify, AUTH_BASE_URL e OBRIGATORIA: o host
+ * que chega na funcao e o do deploy especifico
+ * (`<id>--projeto.netlify.app`), nao o canonico. Sem fixar, cada deploy manda
+ * ao Google uma redirect_uri diferente, nenhuma registrada, e o login falha
+ * com redirect_uri_mismatch.
  */
 export function configGoogle(request: Request): ConfigGoogle {
   const clientId = process.env.GOOGLE_CLIENT_ID;
