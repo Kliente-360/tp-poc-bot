@@ -192,13 +192,24 @@ export class MotorDeConversa {
         ...(this.config.effort ? { output_config: { effort: this.config.effort } } : {}),
       });
 
+      // Depois de uma ferramenta o modelo volta a escrever, e os dois textos
+      // saem colados no stream: "...da TotalPass?Se quiser...". Ele nao tem
+      // como saber que ja havia texto antes da chamada.
+      let primeiroDaVolta = true;
+
       for await (const evento of stream) {
         if (evento.type !== 'content_block_delta' || evento.delta.type !== 'text_delta') continue;
-        const visivel = filtro.empurrar(evento.delta.text);
-        if (visivel) {
-          turno.resposta += visivel;
-          yield { tipo: 'texto', texto: visivel };
+
+        let visivel = filtro.empurrar(evento.delta.text);
+        if (!visivel) continue;
+
+        if (primeiroDaVolta && turno.resposta.length > 0) {
+          visivel = `\n\n${visivel.replace(/^\s+/, '')}`;
         }
+        primeiroDaVolta = false;
+
+        turno.resposta += visivel;
+        yield { tipo: 'texto', texto: visivel };
       }
 
       const resposta = await stream.finalMessage();
