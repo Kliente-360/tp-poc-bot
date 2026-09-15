@@ -23,11 +23,18 @@ export async function GET(request: Request): Promise<Response> {
    *
    * Em preview AUTH_BASE_URL nao existe, a origem e derivada da requisicao, e
    * nao ha o que canonizar.
+   *
+   * A comparacao usa o cabecalho Host, e nao `request.url`: dentro da funcao a
+   * URL ora chega com o host do deploy, ora com o canonico, e nao serve para
+   * saber em que endereco o navegador esta. O Host e o que o navegador mandou,
+   * e e ele que decide onde o cookie sera gravado.
    */
   const base = process.env.AUTH_BASE_URL;
-  if (base && new URL(base).origin !== new URL(request.url).origin) {
+  const hostDoNavegador = request.headers.get('x-forwarded-host') ?? request.headers.get('host');
+  if (base && hostDoNavegador && new URL(base).host !== hostDoNavegador) {
     const canonico = new URL('/api/auth/login', base);
     const destinoOriginal = new URL(request.url).searchParams.get('destino');
+    console.log(JSON.stringify({ evento: 'login_canonizado', de: hostDoNavegador }));
     if (destinoOriginal) canonico.searchParams.set('destino', destinoOriginal);
     return new Response(null, { status: 302, headers: { Location: canonico.toString() } });
   }
