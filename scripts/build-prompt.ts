@@ -10,8 +10,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { FilesystemSource } from '../src/lib/kb/filesystem-source.js';
 import { MODELO, montarSystemPrompt } from '../src/lib/prompt/system-prompt.js';
 
-/** Claude Opus 5, por 1M de tokens. */
-const PRECO = { entrada: 5.0, saida: 25.0, escritaDeCache: 6.25, leituraDeCache: 0.5 };
+/** Claude Sonnet 5, por 1M de tokens. */
+const PRECO = { entrada: 2.0, saida: 10.0, escritaDeCache: 2.5, leituraDeCache: 0.2 };
 
 const titulo = (t: string) => console.log(`\n\x1b[1m${t}\x1b[0m`);
 const linha = (k: string, v: string) => console.log(`  ${k.padEnd(34)} ${v}`);
@@ -81,7 +81,7 @@ async function main() {
   }
 
   console.log(
-    `\n  \x1b[2mSo tokens de entrada. A saida (US$ ${PRECO.saida}/1M no Opus 5) depende do tamanho da resposta.\x1b[0m`,
+    `\n  \x1b[2mSo tokens de entrada. A saida (US$ ${PRECO.saida}/1M no Sonnet 5) depende do tamanho da resposta.\x1b[0m`,
   );
   console.log(
     `  \x1b[2mCache padrao expira em 5 min sem uso. O relogio e do prefixo, nao da conversa.\x1b[0m\n`,

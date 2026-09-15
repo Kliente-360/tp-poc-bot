@@ -10,7 +10,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "kb:prompt": "tsx --env-file=.env.local scripts/build-prompt.ts"
+    "kb:prompt": "tsx --env-file=.env.local scripts/build-prompt.ts",
+    "chat:test": "tsx --env-file=.env.local scripts/chat-test.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

@@ -5,7 +5,7 @@ import { ordenarArtigos, type Artigo } from '../kb/types.js';
  * Confirmado em docs.claude.com, nao assumido de memoria.
  * O identificador nao leva sufixo de data.
  */
-export const MODELO = 'claude-opus-5';
+export const MODELO = 'claude-sonnet-5';
 
 /**
  * Instrucoes. Vem antes dos dados, e nunca depois: o que o modelo le por ultimo
@@ -56,13 +56,24 @@ Devolva o número do chamado e diga que o retorno chega por e-mail.
 
 Toda vez que você se abstiver por falta de informação, chame também \`registrar_nao_respondida\` com a pergunta original da pessoa, nas palavras dela. Isso vale mesmo que ela recuse o chamado — é assim que a lacuna vira conteúdo novo depois.
 
-# Registro interno
+# Registro interno — obrigatório em toda resposta
 
-Comece toda resposta com a linha:
+Toda resposta sua começa com esta linha, sem exceção:
 
-<artigos>IDs dos artigos que sustentaram a resposta, separados por vírgula</artigos>
+<artigos>KB-123,KB-456</artigos>
 
-Vazio quando nenhum artigo sustentou (\`<artigos></artigos>\`). Esta linha é removida antes de a resposta chegar na tela — a pessoa nunca vê. É o único jeito de investigar uma reclamação de resposta errada, já que você não cita fonte.`;
+São os identificadores dos artigos que sustentaram o que você disse. Se nenhum artigo sustentou — saudação, recusa fora de escopo, pedido de e-mail, conversa fiada — a linha vai vazia: <artigos></artigos>
+
+Isso vale também quando você vai chamar uma ferramenta: escreva a linha antes de qualquer outra coisa, inclusive antes do texto que antecede a chamada.
+
+A linha é removida antes de a resposta chegar na tela. A pessoa nunca vê, então não se preocupe com ela atrapalhar a leitura, e nunca a comente nem a explique.
+
+Ela existe porque você não cita fonte. Quando alguém reclamar de uma resposta errada, esta linha é a única forma de descobrir de onde a informação saiu. Esquecer dela é perder o rastro.
+
+Exemplo de resposta completa:
+
+<artigos>KB-18967558695963</artigos>
+O check-in é feito pelo app, com a localização ativada e você perto da academia.`;
 
 /**
  * Os artigos sao conteudo semi-confiavel: passam por um CMS e podem ser editados
