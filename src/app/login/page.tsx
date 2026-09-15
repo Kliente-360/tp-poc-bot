@@ -1,5 +1,3 @@
-import Link from 'next/link';
-
 export const dynamic = 'force-dynamic';
 
 /**
@@ -13,8 +11,10 @@ const MOTIVOS: Record<string, string> = {
   dominio: 'Essa conta não tem acesso a esta demonstração.',
   nao_verificado: 'Essa conta do Google não tem e-mail verificado.',
   cancelado: 'Login cancelado.',
-  state: 'A sessão de login expirou. Tente de novo.',
-  incompleto: 'A sessão de login expirou. Tente de novo.',
+  sem_cookie: 'O navegador não devolveu o cookie de login. Tente de novo; se repetir, verifique se cookies estão bloqueados para este site.',
+  state_divergente: 'A tentativa de login não confere com a que começou aqui. Tente de novo.',
+  sem_verificador: 'Faltou parte da sessão de login. Tente de novo.',
+  incompleto: 'O Google não devolveu os dados do login. Tente de novo.',
   google: 'Não consegui falar com o Google. Tente de novo em instantes.',
 };
 
@@ -47,9 +47,15 @@ export default async function Login({
           </p>
         )}
 
-        <Link
+        {/*
+          <a> puro, e nao <Link>: Link faz navegacao client-side, e apontada
+          para uma rota de API o router busca a rota, recebe o 302 e pode
+          acabar invocando o login duas vezes. Cada invocacao gera um `state`
+          novo e sobrescreve o cookie — o state que vai ao Google fica de uma
+          chamada e o cookie da outra, e o retorno e recusado por divergencia.
+        */}
+        <a
           href={`/api/auth/login?destino=${encodeURIComponent(destino)}`}
-          prefetch={false}
           className="mt-8 flex items-center justify-center gap-3 rounded-xl bg-white px-5 py-3 text-[14px] font-medium text-tp-noite transition-colors hover:bg-tp-verde"
         >
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
@@ -59,7 +65,7 @@ export default async function Login({
             <path fill="#EA4335" d="M12 4.8c1.7 0 3.2.6 4.4 1.7l3.3-3.3C17.7 1.2 15.1 0 12 0 7.6 0 3.7 2.6 1.8 6.1l3.8 3C6.5 6.7 9 4.8 12 4.8Z" />
           </svg>
           Entrar com Google
-        </Link>
+        </a>
 
         <p className="mt-6 text-center text-[11px] leading-relaxed text-white/35">
           Ambiente de demonstração. Não é o portal em produção.

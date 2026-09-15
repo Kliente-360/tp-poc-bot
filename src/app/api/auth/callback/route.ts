@@ -48,10 +48,11 @@ export async function GET(request: Request): Promise<Response> {
   // O state do cookie precisa bater com o que voltou na URL. E o que impede
   // alguem de forjar um retorno de login com um codigo que nao foi pedido aqui.
   const stateEsperado = lerCookie(request, COOKIE_STATE);
-  if (!stateEsperado || stateEsperado !== state) return recusar(request, 'state');
+  if (!stateEsperado) return recusar(request, 'sem_cookie');
+  if (stateEsperado !== state) return recusar(request, 'state_divergente');
 
   const verificador = lerCookie(request, COOKIE_VERIFICADOR);
-  if (!verificador) return recusar(request, 'state');
+  if (!verificador) return recusar(request, 'sem_verificador');
 
   let identidade;
   try {
