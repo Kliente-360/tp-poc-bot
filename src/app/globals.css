@@ -1,0 +1,19 @@
+@import 'tailwindcss';
+
+/**
+ * Identidade da TotalPass, extraída de totalpass.com/br.
+ * Usada só pela página simulada do portal — o painel de conversa tem os seus
+ * próprios tokens, para poder ser extraído depois sem levar isto junto.
+ */
+@theme {
+  --color-tp-verde: #26d07c;
+  --color-tp-verde-claro: #3ff49b;
+  --color-tp-verde-escuro: #169d5a;
+  --color-tp-noite: #00210f;
+  --color-tp-grafite: #353535;
+  --color-tp-nevoa: #f3f3f6;
+  --color-tp-borda: #dbdbdb;
+  --color-tp-apagado: #a9acac;
+}
+
+html, body { padding: 0; margin: 0; }

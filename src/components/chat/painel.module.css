@@ -1,0 +1,307 @@
+/**
+ * Estilos do painel de conversa.
+ *
+ * Tokens proprios de proposito. O painel nao herda nada da pagina que o
+ * hospeda, para que a extracao para o widget embedado seja mover a pasta e
+ * mais nada. Por isso tambem nao ha Tailwind aqui.
+ */
+.flutuante,
+.painel {
+  --lets-verde: #26d07c;
+  --lets-verde-escuro: #169d5a;
+  --lets-noite: #00210f;
+  --lets-tinta: #14181a;
+  --lets-apagado: #6b7472;
+  --lets-borda: #e4e7e6;
+  --lets-fundo: #ffffff;
+  --lets-nevoa: #f3f5f4;
+  --lets-sombra: 0 12px 40px rgb(0 0 0 / 18%);
+  --lets-raio: 16px;
+
+  font-family: var(--font-poppins), system-ui, -apple-system, sans-serif;
+  box-sizing: border-box;
+}
+
+.painel *,
+.flutuante * {
+  box-sizing: border-box;
+}
+
+/* ---------- botão flutuante ---------- */
+
+.flutuante {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 2147483000;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--lets-verde);
+  color: var(--lets-noite);
+  box-shadow: var(--lets-sombra);
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+
+.flutuante:hover {
+  background: var(--lets-verde-escuro);
+  transform: translateY(-2px);
+}
+
+.flutuante:focus-visible {
+  outline: 3px solid var(--lets-noite);
+  outline-offset: 3px;
+}
+
+/* ---------- painel ---------- */
+
+.painel {
+  position: fixed;
+  right: 20px;
+  bottom: 90px;
+  z-index: 2147483000;
+  display: flex;
+  flex-direction: column;
+  width: 390px;
+  height: min(620px, calc(100vh - 130px));
+  overflow: hidden;
+  border: 1px solid var(--lets-borda);
+  border-radius: var(--lets-raio);
+  background: var(--lets-fundo);
+  box-shadow: var(--lets-sombra);
+  animation: subir 0.2s ease;
+}
+
+@keyframes subir {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Tela estreita: o painel toma a tela toda. O cliente vai abrir no celular
+   durante a apresentacao. */
+@media (max-width: 640px) {
+  .painel {
+    inset: 0;
+    width: 100%;
+    height: 100dvh;
+    border: none;
+    border-radius: 0;
+  }
+  .flutuante { right: 16px; bottom: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .painel { animation: none; }
+  .flutuante { transition: none; }
+}
+
+/* ---------- topo ---------- */
+
+.topo {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  background: var(--lets-noite);
+  color: #fff;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--lets-verde);
+  color: var(--lets-noite);
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.nome { margin: 0; font-size: 15px; font-weight: 600; }
+.status { margin: 1px 0 0; font-size: 12px; color: #9fb3a9; }
+
+.fechar {
+  margin-left: auto;
+  padding: 4px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+.fechar:hover { background: rgb(255 255 255 / 12%); }
+
+/* Fechar no topo e redundante no desktop, onde o botao flutuante fica visivel. */
+.fechar { display: none; }
+@media (max-width: 640px) { .fechar { display: block; } }
+
+/* ---------- corpo ---------- */
+
+.corpo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  overflow-y: auto;
+  background: var(--lets-nevoa);
+}
+
+.balao {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.daLets {
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+  background: var(--lets-fundo);
+  color: var(--lets-tinta);
+  border: 1px solid var(--lets-borda);
+}
+
+.doUsuario {
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+  background: var(--lets-verde);
+  color: var(--lets-noite);
+  font-weight: 500;
+}
+
+/* ---------- digitando ---------- */
+
+.digitando {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  padding: 14px;
+}
+
+.digitando i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--lets-apagado);
+  animation: pulsar 1.2s infinite ease-in-out;
+}
+
+.digitando i:nth-child(2) { animation-delay: 0.16s; }
+.digitando i:nth-child(3) { animation-delay: 0.32s; }
+
+@keyframes pulsar {
+  0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
+  30%           { opacity: 1;    transform: translateY(-3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .digitando i { animation: none; opacity: 0.5; }
+}
+
+/* ---------- sugestões ---------- */
+
+.sugestoes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+
+.sugestao {
+  padding: 7px 13px;
+  border: 1px solid var(--lets-borda);
+  border-radius: 999px;
+  background: var(--lets-fundo);
+  color: var(--lets-tinta);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.sugestao:hover { border-color: var(--lets-verde); background: #f0fbf5; }
+
+/* ---------- erro ---------- */
+
+.erro {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 11px 13px;
+  border: 1px solid #f0c7c0;
+  border-radius: 12px;
+  background: #fdf2f0;
+  color: #8a2b1a;
+  font-size: 13px;
+}
+
+.erro button {
+  border: none;
+  border-radius: 999px;
+  padding: 5px 12px;
+  background: #8a2b1a;
+  color: #fff;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* ---------- rodapé ---------- */
+
+.rodape {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  padding: 12px;
+  border-top: 1px solid var(--lets-borda);
+  background: var(--lets-fundo);
+}
+
+.campo {
+  flex: 1;
+  max-height: 110px;
+  padding: 10px 12px;
+  border: 1px solid var(--lets-borda);
+  border-radius: 12px;
+  background: var(--lets-fundo);
+  color: var(--lets-tinta);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+  resize: none;
+}
+
+.campo:focus-visible { outline: 2px solid var(--lets-verde); outline-offset: -1px; }
+.campo:disabled { background: var(--lets-nevoa); }
+
+.enviar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--lets-verde);
+  color: var(--lets-noite);
+  cursor: pointer;
+}
+
+.enviar:disabled { background: var(--lets-borda); color: var(--lets-apagado); cursor: default; }
+.enviar:not(:disabled):hover { background: var(--lets-verde-escuro); }
+
+.aviso {
+  margin: 0;
+  padding: 0 12px 10px;
+  background: var(--lets-fundo);
+  color: var(--lets-apagado);
+  font-size: 10.5px;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
